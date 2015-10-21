@@ -76,6 +76,21 @@ set.paths <- function(path=""){
     # - [x] return list
   }
 }
+get.breakpoint <- function(x,nClusters=2){ # use kmeans function
+  x <- as.numeric(x)
+  result <- NULL
+  breakpoint <- kmeans(x=x,centers=nClusters)$centers
+  if(dim(breakpoint)[1] == 2){result <- mean(breakpoint)}
+  if(dim(breakpoint)[1] == 3){result <- c(mean(breakpoint[1:2,1]),mean(breakpoint[2:3,1]))}
+  return(result)
+}
+clusters.mean.sd <- function(x,na.rm=TRUE,breakpoint){
+    clusters <- c(mean(x[x < breakpoint],na.rm=na.rm), sd(x[x < breakpoint],na.rm=na.rm))
+    clusters <- rbind(clusters,c(mean(x[x > breakpoint],na.rm=na.rm), sd(x[x > breakpoint],na.rm=na.rm)))
+    clusters <- cbind(clusters,clusters[,2]*3)
+    rownames(clusters) <- c("cluster1","cluster2");colnames(clusters) <- c("mean","sd","3*sd")
+  return(clusters)
+}
 # RUN FUNCTIONS
 create.folders(path=input.path,c("archive","input.data","output.data","scripts","scripts.log"))
 path <- set.paths(input.path)
@@ -90,16 +105,28 @@ analysis <- function(){
   files <- list.files(file.path(path$input.data,data.folder),pattern = ".csv")
   i=11
   data <- read.table(file.path(path$input.data,data.folder,files[i]),header=TRUE,sep=",")
-  plot(data[,1],data[,2], cex=0.5, col="00000020")
+  plot(data[,1],data[,2], cex=0.5, col="00000020", ylab="Channel 1", xlab="Channel 2")
  	# - [x] check amount of droplets
   if(dim(data)[1] < 10000){
     cat("Number of droplets for well", files[i], "is not enough for automated analysis (< 10.000). Sample will be skipped.\n")
     next
   }else{cat("A total of", dim(data)[1], "droplets were found for analysis.\n")}
-	# - [ ] check the intensity of the droplets
-  
-	# - [ ] find clusters (1, 2, 3, 4)
+	# - [x] check the intensity of the droplets
+  if(max(data[,1]) < 4000){
+    cat("Intensity for channel 1 for well", files[i], "is lower then expected. Please check your sample.\n")
+  } else {cat("Maximum intensity for channel 1 for well ", files[i], " is ",max(data[,1]),".\n", sep="")
+    }
+  if(max(data[,1]) < 4000){
+    cat("Intensity for channel 2 for well", files[i], "is lower then expected. Please check your sample.\n")
+  } else {cat("Maximum intensity for channel 2 for well ", files[i], " is ",max(data[,1]),".\n",sep="")
+    }
+	# - [x] find clusters (1, 2, 3, 4)
+  breakpoints.ch1 <- get.breakpoints(x=data[,1],nClusters=2)
+  breakpoints.ch2 <- get.breakpoints(x=data[,2],nClusters=2)
+  clusters.ch1 <- clusters.mean.sd(data[,1],breakpoints=breakpoints.ch1)
+  clusters.ch2 <- clusters.mean.sd(data[,2],breakpoints=breakpoints.ch2)
   # - [ ] [OPTIONAL] Use density lines to find clusters
+  
  	# - [ ] if 2 clusters -> define the rain (FAM/HEX)
  	# - [ ] add column with results to data (0=neg, 1=rain, 2=positive)
  	# - [ ] write data to disk
