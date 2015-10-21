@@ -103,7 +103,7 @@ analysis <- function(){
   data.folder <- "20150226 nano quantification"
   # - [x] read input data
   files <- list.files(file.path(path$input.data,data.folder),pattern = ".csv")
-  i=11
+  i=6
   data <- read.table(file.path(path$input.data,data.folder,files[i]),header=TRUE,sep=",")
   plot(data[,1],data[,2], cex=0.5, col="00000020", ylab="Channel 1", xlab="Channel 2")
  	# - [x] check amount of droplets
@@ -125,6 +125,14 @@ analysis <- function(){
   breakpoints.ch2 <- get.breakpoints(x=data[,2],nClusters=2)
   clusters.ch1 <- clusters.mean.sd(data[,1],breakpoints=breakpoints.ch1)
   clusters.ch2 <- clusters.mean.sd(data[,2],breakpoints=breakpoints.ch2)
+  # - [ ] data check: 
+    # - [ ] what is the max amplitude of the probes
+    # - [ ] how many probes are there above 50% of the max?
+    # - [ ] how much of the probes are located below 2000,3000,4000 intensity?
+    # - [ ] find breakpoint for 2 clusters 
+    # - [ ] calculate the amount of probes within 1sd of the breakpoint
+    # - [ ] calculate the amount of probes on on each side of the breakpoint
+  
   # - [ ] [OPTIONAL] Use density lines to find clusters
   
  	# - [ ] if 2 clusters -> define the rain (FAM/HEX)
