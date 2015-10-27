@@ -98,45 +98,92 @@ log.file <- paste(format(Sys.time(), "%Y%m%d-%H%M"),"_script_checklist.md",sep="
 make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
 # END
 
+# ANALYSIS PER CHANNEL (NOT BOTH AT THE SAME TIME
+# RUN THROUGH ALL THE OPTIONS AND CREATE MATRIX FOR EACH CHANNEL
+# >10000 DROPLETS = true , INTENSITY>4000= true, ETC... IF ALL OK THEN RUN ANALYSIS, ELSE RESULT IS IN TXT FILE WITH CHECKS.
+
+
+
 analysis <- function(){
   # - [x] set input data folder
   data.folder <- "20150226 nano quantification"
   # - [x] read input data
   files <- list.files(file.path(path$input.data,data.folder),pattern = ".csv")
-  i=6
-  data <- read.table(file.path(path$input.data,data.folder,files[i]),header=TRUE,sep=",")
-  plot(data[,1],data[,2], cex=0.5, col="00000020", ylab="Channel 1", xlab="Channel 2")
- 	# - [x] check amount of droplets
-  if(dim(data)[1] < 10000){
-    cat("Number of droplets for well", files[i], "is not enough for automated analysis (< 10.000). Sample will be skipped.\n")
-    next
-  }else{cat("A total of", dim(data)[1], "droplets were found for analysis.\n")}
+
+ 	# - [x] check amount of droplets [remove?]
+  #if(length(data) < 10000){
+   # cat("Number of droplets is not enough for automated analysis (< 10.000). Sample will be skipped.\n")
+    #next
+  #}else{cat("A total of", length(data), "droplets were found for analysis.\n")}
 	# - [x] check the intensity of the droplets
-  if(max(data[,1]) < 4000){
-    cat("Intensity for channel 1 for well", files[i], "is lower then expected. Please check your sample.\n")
-  } else {cat("Maximum intensity for channel 1 for well ", files[i], " is ",max(data[,1]),".\n", sep="")
-    }
-  if(max(data[,1]) < 4000){
-    cat("Intensity for channel 2 for well", files[i], "is lower then expected. Please check your sample.\n")
-  } else {cat("Maximum intensity for channel 2 for well ", files[i], " is ",max(data[,1]),".\n",sep="")
-    }
-	# - [x] find clusters (1, 2, 3, 4)
-  breakpoints.ch1 <- get.breakpoints(x=data[,1],nClusters=2)
-  breakpoints.ch2 <- get.breakpoints(x=data[,2],nClusters=2)
-  clusters.ch1 <- clusters.mean.sd(data[,1],breakpoints=breakpoints.ch1)
-  clusters.ch2 <- clusters.mean.sd(data[,2],breakpoints=breakpoints.ch2)
-  # - [ ] data check: 
-    # - [ ] what is the max amplitude of the probes
-    # - [ ] how many probes are there above 50% of the max?
-    # - [ ] how much of the probes are located below 2000,3000,4000 intensity?
-    # - [ ] find breakpoint for 2 clusters 
-    # - [ ] calculate the amount of probes within 1sd of the breakpoint
-    # - [ ] calculate the amount of probes on on each side of the breakpoint
+  #if(max(data) < 4000){
+   # cat("Intensity for channel 1 is lower then expected. Please check your sample.\n")
+  #} else {cat("Maximum intensity for channel 1 is ",max(data),".\n", sep="")
+    #}
+
+ # plot(data, cex=0.5, col="#00000020", ylab="Amplitude", xlab="droplets", pch=19)
+ # abline(v=data.breakpoint)
+  #abline(v=data.clusters[,1], col="red")
+
+  # - [x] create matrix for data check
+  nSamples <- length(files)
+  results <- matrix(data=NA, nrow=(nSamples*2), ncol=13,byrow = TRUE)
+  colnames(results) <- c("FileName","Channel","TotalDroplets","MaxAmplitude","DropletsAbove2000Amp","DropletsAbove3000Amp","DropletsAbove4000Amp",
+    "BreakpointFor2Clusters","DropletsCluster1_1sd","DropletsCluster2_1sd","DropletsCluster1_3sd","DropletsCluster2_3sd","Overlapping3sdValues")
+  counter <- 1
+  for(s in 1:length(files)){
+    sample.data <- read.table(file.path(path$input.data,data.folder,files[s]),header=TRUE,sep=",")
+    result.list <- seq(1,length(files)*2, by=1)
+   
+    for(c in 1:2){
+      if(c == 1){ data <- sample.data[,1]
+                  channel <- "Ch1"
+                  }
+      if(c == 2){ data <- sample.data[,2]
+                  channel <- "Ch2" 
+                }
+      # - [x] find breakpoint between clusters
+      data.breakpoint <- get.breakpoint(x=data,nClusters=2)
+      data.clusters <- clusters.mean.sd(data,breakpoint=data.breakpoint)
+      # - [x] collect all the results
   
+      results[counter,1] <- files[i]
+      results[counter,2] <- channel
+      results[counter,3] <- length(data)
+      # - [x] what is the max amplitude of the probes
+      results[counter,4] <- max(data) 
+      # - [x] how much of the probes are located below 2000,3000,4000 intensity?
+      results[counter,5] <- sum(data > 2000)
+      results[counter,6] <- sum(data > 3000)
+      results[counter,7] <- sum(data > 4000)
+      results[counter,8] <- get.breakpoint(x=data,nClusters=2)
+      # - [x] calculate the amount of probes within 1sd of mean cluater
+      results[counter,9] <- sum((data > data.clusters[1,1]-data.clusters[1,2]) & (data < data.clusters[1,1]+data.clusters[1,2])) 
+      results[counter,10] <- sum((data > data.clusters[2,1]-data.clusters[2,2]) & (data < data.clusters[2,1]+data.clusters[2,2])) 
+      # - [x] calculate the amount of probes within 3sd of mean cluster
+      results[counter,11] <- sum((data > data.clusters[1,1]-data.clusters[1,3]) & (data < data.clusters[1,1]+data.clusters[1,3]))
+      results[counter,12] <- sum((data > data.clusters[2,1]-data.clusters[2,3]) & (data < data.clusters[2,1]+data.clusters[2,3])) 
+      # - [x] calculate if 3sd of mean clusters is overlapping (define the rain cut-offs)
+      results[counter,13] <- (data.clusters[2,1]-data.clusters[2,3]) < (data.clusters[1,1]+data.clusters[1,3])
+      
+      counter <- counter + 1 
+      }
+  }
+  output.file <- file.path(path$output.data,paste(format(Sys.time(), "%Y%m%d-%H%M"),"_ddPCR_analysis.txt",sep=""))
+  write.table(file = output.file, x = results,quote = FALSE,sep = "\t",row.names = FALSE)
+
   # - [ ] [OPTIONAL] Use density lines to find clusters
   
- 	# - [ ] if 2 clusters -> define the rain (FAM/HEX)
+ 	# - [ ] if 2 clusters -> define the rain in amount of droplets
+  # - [ ] if 2 clusters -> define the rain in percentage of droplets
  	# - [ ] add column with results to data (0=neg, 1=rain, 2=positive)
  	# - [ ] write data to disk
  	# - [ ] create plot of the data (FAM/HEX)
-} 
+}
+cluster.types <- function(){
+  # - [ ] type 1: 2 neg clusters, 1 positive clusters
+  # - [ ] type 2: 1 negateive cluster, 1 positive cluster
+  # - [ ] type 3: 1 negative cluster
+  # - [ ] type 4: 1 negative cluster, 1 positive cluster, noise in between
+  # - [ ] type 5: 1 negative cluster, some positive droplets (noise?)
+  }
