@@ -60,17 +60,13 @@ create.folders <- function(path,folders){
 set.paths <- function(path=""){
   if(path == "" | class(path) == "numeric"){ stop
   } else {
-    archive <- file.path(path,"archive")
-    input.data <-  file.path(path,"input.data")
-    output.data <-  file.path(path,"output.data")
-    scripts <-  file.path(path,"scripts")
-    scripts.log <- file.path(path,"scripts.log")
     # - [x] set paths
-    paths <- list(archive=archive,
-                  input.data=input.data,
-                  output.data=output.data,
-                  scripts=scripts,
-                  scripts.log=scripts.log)
+    paths <- list(archive=file.path(path,"archive"),
+                  input.data=file.path(path,"input.data"),
+                  output.data=file.path(path,"output.data"),
+                  output.plot=file.path(path,"output.plot"),
+                  scripts=file.path(path,"scripts"),
+                  scripts.log= file.path(path,"scripts.log"))
     # - [x] make list
     return(paths)
     # - [x] return list
@@ -84,6 +80,10 @@ get.breakpoint <- function(x,nClusters=2){ # use kmeans function
   if(dim(breakpoint)[1] == 3){result <- c(mean(breakpoint[1:2,1]),mean(breakpoint[2:3,1]))}
   return(result)
 }
+get.breakpoint.mean <- function(x){ 
+  result <- min(x)+((max(x)-min(x))/2)
+  return(result)
+}
 clusters.mean.sd <- function(x,na.rm=TRUE,breakpoint){
     clusters <- c(mean(x[x < breakpoint],na.rm=na.rm), sd(x[x < breakpoint],na.rm=na.rm))
     clusters <- rbind(clusters,c(mean(x[x > breakpoint],na.rm=na.rm), sd(x[x > breakpoint],na.rm=na.rm)))
@@ -92,7 +92,7 @@ clusters.mean.sd <- function(x,na.rm=TRUE,breakpoint){
   return(clusters)
 }
 # RUN FUNCTIONS
-create.folders(path=input.path,c("archive","input.data","output.data","scripts","scripts.log"))
+create.folders(path=input.path,c("archive","input.data","output.data","output.plot","scripts","scripts.log"))
 path <- set.paths(input.path)
 log.file <- paste(format(Sys.time(), "%Y%m%d-%H%M"),"_script_checklist.md",sep="")
 make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
@@ -110,26 +110,11 @@ analysis <- function(){
   # - [x] read input data
   files <- list.files(file.path(path$input.data,data.folder),pattern = ".csv")
 
- 	# - [x] check amount of droplets [remove?]
-  #if(length(data) < 10000){
-   # cat("Number of droplets is not enough for automated analysis (< 10.000). Sample will be skipped.\n")
-    #next
-  #}else{cat("A total of", length(data), "droplets were found for analysis.\n")}
-	# - [x] check the intensity of the droplets
-  #if(max(data) < 4000){
-   # cat("Intensity for channel 1 is lower then expected. Please check your sample.\n")
-  #} else {cat("Maximum intensity for channel 1 is ",max(data),".\n", sep="")
-    #}
-
- # plot(data, cex=0.5, col="#00000020", ylab="Amplitude", xlab="droplets", pch=19)
- # abline(v=data.breakpoint)
-  #abline(v=data.clusters[,1], col="red")
-
   # - [x] create matrix for data check
   nSamples <- length(files)
-  results <- matrix(data=NA, nrow=(nSamples*2), ncol=13,byrow = TRUE)
-  colnames(results) <- c("FileName","Channel","TotalDroplets","MaxAmplitude","DropletsAbove2000Amp","DropletsAbove3000Amp","DropletsAbove4000Amp",
-    "BreakpointFor2Clusters","DropletsCluster1_1sd","DropletsCluster2_1sd","DropletsCluster1_3sd","DropletsCluster2_3sd","Overlapping3sdValues")
+  results <- matrix(data=NA, nrow=(nSamples*2), ncol=16,byrow = TRUE)
+  colnames(results) <- c("FileName","Channel","TotalDroplets","MinAmplitude","MaxAmplitude","DropletsAbove2000Amp","DropletsAbove3000Amp","DropletsAbove4000Amp",
+    "Breakpoint","BreakpointKmeans","BreakpointMean","DropletsCluster1_1sd","DropletsCluster2_1sd","DropletsCluster1_3sd","DropletsCluster2_3sd","Overlapping3sdValues")
   counter <- 1
   for(s in 1:length(files)){
     sample.data <- read.table(file.path(path$input.data,data.folder,files[s]),header=TRUE,sep=",")
@@ -138,38 +123,57 @@ analysis <- function(){
     for(c in 1:2){
       if(c == 1){ data <- sample.data[,1]
                   channel <- "Ch1"
+                  breakpoint <- 4750
                   }
       if(c == 2){ data <- sample.data[,2]
                   channel <- "Ch2" 
+                  breakpoint <- 4000
                 }
       # - [x] find breakpoint between clusters
       data.breakpoint <- get.breakpoint(x=data,nClusters=2)
-      data.clusters <- clusters.mean.sd(data,breakpoint=data.breakpoint)
+      data.clusters <- clusters.mean.sd(data,breakpoint=breakpoint)
+    
+      breakpoint.mean <- function(){
+        # - [x] find breakpoint between clusters with the mean of Amplitude
+        data.breakpoint.mean <- get.breakpoint.mean(x = data)
+        data.clusters.mean <- clusters.mean.sd(data,breakpoint=data.breakpoint.mean)
+      } # [idea, not yet worked out.]
+
       # - [x] collect all the results
-  
-      results[counter,1] <- files[i]
+      results[counter,1] <- files[s]
       results[counter,2] <- channel
       results[counter,3] <- length(data)
       # - [x] what is the max amplitude of the probes
-      results[counter,4] <- max(data) 
+      results[counter,4] <- round(min(data))
+      results[counter,5] <- round(max(data))
       # - [x] how much of the probes are located below 2000,3000,4000 intensity?
-      results[counter,5] <- sum(data > 2000)
-      results[counter,6] <- sum(data > 3000)
-      results[counter,7] <- sum(data > 4000)
-      results[counter,8] <- get.breakpoint(x=data,nClusters=2)
+      results[counter,6] <- sum(data > 2000)
+      results[counter,7] <- sum(data > 3000)
+      results[counter,8] <- sum(data > 4000)
+      results[counter,9] <- breakpoint
+      results[counter,10] <- round(get.breakpoint(x=data,nClusters=2))
+      results[counter,11] <- round(get.breakpoint.mean(x=data))
       # - [x] calculate the amount of probes within 1sd of mean cluater
-      results[counter,9] <- sum((data > data.clusters[1,1]-data.clusters[1,2]) & (data < data.clusters[1,1]+data.clusters[1,2])) 
-      results[counter,10] <- sum((data > data.clusters[2,1]-data.clusters[2,2]) & (data < data.clusters[2,1]+data.clusters[2,2])) 
+      results[counter,12] <- sum((data > data.clusters[1,1]-data.clusters[1,2]) & (data < data.clusters[1,1]+data.clusters[1,2])) 
+      results[counter,13] <- sum((data > data.clusters[2,1]-data.clusters[2,2]) & (data < data.clusters[2,1]+data.clusters[2,2])) 
       # - [x] calculate the amount of probes within 3sd of mean cluster
-      results[counter,11] <- sum((data > data.clusters[1,1]-data.clusters[1,3]) & (data < data.clusters[1,1]+data.clusters[1,3]))
-      results[counter,12] <- sum((data > data.clusters[2,1]-data.clusters[2,3]) & (data < data.clusters[2,1]+data.clusters[2,3])) 
+      results[counter,14] <- sum((data > data.clusters[1,1]-data.clusters[1,3]) & (data < data.clusters[1,1]+data.clusters[1,3]))
+      results[counter,15] <- sum((data > data.clusters[2,1]-data.clusters[2,3]) & (data < data.clusters[2,1]+data.clusters[2,3])) 
       # - [x] calculate if 3sd of mean clusters is overlapping (define the rain cut-offs)
-      results[counter,13] <- (data.clusters[2,1]-data.clusters[2,3]) < (data.clusters[1,1]+data.clusters[1,3])
+      results[counter,16] <- (data.clusters[2,1]-data.clusters[2,3]) < (data.clusters[1,1]+data.clusters[1,3])
       
       counter <- counter + 1 
-      }
+    }
+    # - [x] create plot for each well
+    output.file <- gsub(pattern = ".csv",replacement=".png",x=files[s])
+    png(filename = file.path(path$output.plot, output.file),width = 1000,height = 1000)
+    plot(sample.data[,1],sample.data[,2], cex=0.5, col="#00000020", ylab="Ch2 Amplitude", xlab="Ch1 Amplitude", pch=19,main=files[s],
+         ylim=c(0,11000), xlim=c(0,15000) )
+    abline(v=4750, col="red")
+    abline(h=4000, col="red")
+    dev.off()
   }
-  output.file <- file.path(path$output.data,paste(format(Sys.time(), "%Y%m%d-%H%M"),"_ddPCR_analysis.txt",sep=""))
+  output.file <- file.path(path$output.data,paste(format(Sys.time(), "%Y%m%d"),"_ddPCR_analysis.txt",sep=""))
   write.table(file = output.file, x = results,quote = FALSE,sep = "\t",row.names = FALSE)
 
   # - [ ] [OPTIONAL] Use density lines to find clusters
