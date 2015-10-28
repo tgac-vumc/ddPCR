@@ -106,7 +106,7 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
 
 analysis <- function(){
   # - [x] set input data folder
-  data.folder <- "20150226 nano quantification"
+  data.folder <- "CREBBP-EZH2 Fol Lymph panel_2015-07-24-14-38"
   # - [x] read input data
   files <- list.files(file.path(path$input.data,data.folder),pattern = ".csv")
 
@@ -173,7 +173,7 @@ analysis <- function(){
     abline(h=4000, col="red")
     dev.off()
   }
-  output.file <- file.path(path$output.data,paste(format(Sys.time(), "%Y%m%d"),"_ddPCR_analysis.txt",sep=""))
+  output.file <- file.path(path$output.data,paste(format(Sys.time(), "%Y%m%d"),"_",data.folder,"_ddPCR_analysis.txt",sep=""))
   write.table(file = output.file, x = results,quote = FALSE,sep = "\t",row.names = FALSE)
 
   # - [ ] [OPTIONAL] Use density lines to find clusters
