@@ -106,7 +106,7 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
 
 analysis <- function(){
   # - [x] set input data folder
-  data.folder <- "CREBBP-EZH2 Fol Lymph panel_2015-07-24-14-38"
+  data.folder <- "20151028 EGFR sm_2015-10-28-16-31"
   # - [x] read input data
   files <- list.files(file.path(path$input.data,data.folder),pattern = ".csv")
 
@@ -123,15 +123,13 @@ analysis <- function(){
     for(c in 1:2){
       if(c == 1){ data <- sample.data[,1]
                   channel <- "Ch1"
-                  breakpoint <- 4750
                   }
       if(c == 2){ data <- sample.data[,2]
                   channel <- "Ch2" 
-                  breakpoint <- 4000
                 }
       # - [x] find breakpoint between clusters
       data.breakpoint <- get.breakpoint(x=data,nClusters=2)
-      data.clusters <- clusters.mean.sd(data,breakpoint=breakpoint)
+      data.clusters <- clusters.mean.sd(data,breakpoint=data.breakpoint)
     
       breakpoint.mean <- function(){
         # - [x] find breakpoint between clusters with the mean of Amplitude
@@ -150,7 +148,7 @@ analysis <- function(){
       results[counter,6] <- sum(data > 2000)
       results[counter,7] <- sum(data > 3000)
       results[counter,8] <- sum(data > 4000)
-      results[counter,9] <- breakpoint
+      results[counter,9] <- data.breakpoint
       results[counter,10] <- round(get.breakpoint(x=data,nClusters=2))
       results[counter,11] <- round(get.breakpoint.mean(x=data))
       # - [x] calculate the amount of probes within 1sd of mean cluater
