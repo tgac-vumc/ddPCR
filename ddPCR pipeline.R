@@ -77,14 +77,21 @@ path <- set.paths(input.path)
 log.file <- paste(format(Sys.time(), "%Y%m%d-%H%M"),"_script_checklist.md",sep="")
 make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
 
+archive <- function()
+{
+  # "design file" with sample information
+  # name  file/well type  probe FDR_positive  FDR_rain
+  # name = sample name
+  # name/well = sample well name /sample file nae
+  # sample type = 'positive', 'sample', 'negative'
+  # probe = probe name to select the 'probe file
+}
 
 ddpcr.pipeline <- function()
   {
-  
-  # - [ ] create files that are needed for the pipeline
-
+  # - [ ] PIPELINE FUNCTIONS
   create.design.file <- function(path)
-    {
+  {
     # - [x] create design file for experiment
     amplitude.files <- list.files(path = path, pattern = "_Amplitude.csv")
     sample.names <- gsub(pattern = "_Amplitude.csv",x = amplitude.files, replacement = "")
@@ -97,14 +104,8 @@ ddpcr.pipeline <- function()
     output.file <- file.path(path,"design.txt")
     write.table(file = output.file,x = design,quote = FALSE,sep = "\t",row.names = FALSE)
   }
-  # "design file" with sample information
-  # name  file/well type  probe FDR_positive  FDR_rain
-  # name = sample name
-  # name/well = sample well name /sample file nae
-  # sample type = 'positive', 'sample', 'negative'
-  # probe = probe name to select the 'probe file
   add.probe.data <- function(path,Name,Date,BreakPoint1,BreakPoint2,PosClusterAmp,NegClusterAmp,PosClusterSD,NegClusterSD,PosFDR,RainFDR)
-    {
+  {
     Name <- tolower(Name)
     probe.file <- file.path(path,paste(name,".Rdata",sep=""))
     if(!file.exists(probe.file)){
@@ -141,10 +142,50 @@ ddpcr.pipeline <- function()
       # - [ ] save probe file
     }
   }
-
-  
+  read.design.file <- function(path,file)
+  {
+    design <- read.table(file = file.path(path,file),header = TRUE,sep = "\t")
+    return(design)
   }
-
+  combine.controls <- function(path,files)
+  {
+    combined.data <- NULL
+    for(i in 1:length(files))
+    { 
+      sample.data <- read.table(file=file.path(path,files[i]),header = TRUE,sep = ",")
+      combined.data <- rbind(combined.data,sample.data )
+    }
+    return(combined.data)
+  }
+  get.breakpoint <- function(x,nClusters=2)
+  { # use kmeans function
+    x <- as.numeric(x)
+    result <- NULL
+    breakpoint <- kmeans(x=x,centers=nClusters)$centers
+    if(dim(breakpoint)[1] == 2){result <- mean(breakpoint)}
+    if(dim(breakpoint)[1] == 3){result <- c(mean(breakpoint[1:2,1]),mean(breakpoint[2:3,1]))}
+    return(result)
+  }
+  
+  # - [ ] PIPELINE SETUP
+  exp.design <- read.design.file(path=file.path(path$input.data,project),"design.txt")
+  # - [x] find control files
+  control.files <- exp.design[exp.design$Type == c("pos","neg"),2]
+  # - [x] combine control files
+  control.data <- combine.controls(path=file.path(path$input.data,project),files=control.files)
+  # - [x] get breakpoint data
+  breakpoint.ch1 <- get.breakpoint(x = control.data[,1])
+  breakpoint.ch2 <- get.breakpoint(x = control.data[,2])
+  # - [x] plot the data
+  plot(y=control.data[,1],x=control.data[,2], cex=0.7, col="#00000040", ylab="Ch2 Amplitude",xlab="Ch1 Amplitude", pch=16,main=Name,
+       xlim=c(0,max(control.data[,2])),ylim=c(0,max(control.data[,1])) )
+  
+  abline(h=breakpoint.ch1, col="red") # channel 1
+  abline(v=breakpoint.ch2, col="red") # channel 2
+  
+}
+  
+  
   # probe file with probe information
   # date of each data set
   # breakpoint channel 1, multiple (learning)
