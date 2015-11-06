@@ -91,6 +91,16 @@ clusters.mean.sd <- function(x,na.rm=TRUE,breakpoint){
     rownames(clusters) <- c("cluster1","cluster2");colnames(clusters) <- c("mean","sd","3*sd")
   return(clusters)
 }
+create.design <- function(path){
+  if(!file.exists(file.path(path,"design.txt"))){
+    files <- list.files(path)
+    sample.names <- paste("sample",seq(1,length(files),by=1),sep="_")
+    sample.type <- c(rep("sample", length(files)-1),"negative")
+    output.data <- cbind(Name=sample.names, File=files,Type=sample.type)
+    output.file <- file.path(path,"design.txt")
+    write.table(x=output.data,file = output.file,quote = FALSE, sep = "\t",row.names = FALSE)
+  }
+}
 # RUN FUNCTIONS
 create.folders(path=input.path,c("archive","input.data","output.data","output.plot","scripts","scripts.log"))
 path <- set.paths(input.path)
@@ -106,7 +116,9 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
 
 analysis <- function(){
   # - [x] set input data folder
-  data.folder <- "20151028 EGFR sm_2015-10-28-16-31"
+  data.folder <- file.path(path$input.data,"20151028 EGFR sm_2015-10-28-16-31")
+  
+  create.design(data.folder)
   # - [x] read input data
   files <- list.files(file.path(path$input.data,data.folder),pattern = ".csv")
 
@@ -130,7 +142,16 @@ analysis <- function(){
       # - [x] find breakpoint between clusters
       data.breakpoint <- get.breakpoint(x=data,nClusters=2)
       data.clusters <- clusters.mean.sd(data,breakpoint=data.breakpoint)
-    
+      # - [ ] make a design file for analysis.
+      # - [ ] read all the data files and combine.
+      # - [ ] find the 2 clusters
+      # - [ ] calculate the min/max 3sd of lowest cluster
+      # - [ ] find negative samples
+      # - [ ] calculate if negative fall between the 3sd of the lowest cluster
+      # - [ ] use kmeans as breakpoint for the clusters.
+      # - [ ] store breakpoint data for channel 1 & channel 2 for plotting
+      
+      
       breakpoint.mean <- function(){
         # - [x] find breakpoint between clusters with the mean of Amplitude
         data.breakpoint.mean <- get.breakpoint.mean(x = data)
@@ -174,8 +195,10 @@ analysis <- function(){
   output.file <- file.path(path$output.data,paste(format(Sys.time(), "%Y%m%d"),"_",data.folder,"_ddPCR_analysis.txt",sep=""))
   write.table(file = output.file, x = results,quote = FALSE,sep = "\t",row.names = FALSE)
 
-  # - [ ] [OPTIONAL] Use density lines to find clusters
   
+  
+  
+  # - [ ] [OPTIONAL] Use density lines to find clusters
  	# - [ ] if 2 clusters -> define the rain in amount of droplets
   # - [ ] if 2 clusters -> define the rain in percentage of droplets
  	# - [ ] add column with results to data (0=neg, 1=rain, 2=positive)
