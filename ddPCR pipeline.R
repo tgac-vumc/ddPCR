@@ -1,5 +1,5 @@
 input.path <- "D:\\R SCRIPTS\\ddPCR analysis" #work
-project <- "Test_EGFR_2015-11-03-16-39"
+project <- "EGFR_test"
 folders <- c("archive","input.data","output.data","output.plot","scripts","scripts.log")
 
 # FUNCTIONS
@@ -94,6 +94,9 @@ archive <- function()
   # name/well = sample well name /sample file nae
   # sample type = 'positive', 'sample', 'negative'
   # probe = probe name to select the 'probe file
+  # - [x] get cluster data - mean and sd for the clusters 
+
+  
   clusters.mean.sd <- function(x,na.rm=TRUE,breakpoint)
   {
     clusters <- c(mean(x[x < breakpoint],na.rm=na.rm), sd(x[x < breakpoint],na.rm=na.rm))
@@ -102,6 +105,8 @@ archive <- function()
     rownames(clusters) <- c("cluster1","cluster2");colnames(clusters) <- c("mean","sd","3*sd")
     return(clusters)
   }
+  mean.sd.ch1 <- clusters.mean.sd(x = control.data[,1],breakpoint = breakpoint.ch1)
+  mean.sd.ch2 <- clusters.mean.sd(x = control.data[,2],breakpoint = breakpoint.ch2)
   
   # - [x] find the cut-off values for negative cluster
   times.sd <- 4
@@ -178,7 +183,7 @@ ddpcr.pipeline <- function()
     design <- read.table(file = file.path(path,file),header = TRUE,sep = "\t")
     return(design)
   }
-  combine.controls <- function(path,files)
+  combine.samples <- function(path,files)
   {
     combined.data <- NULL
     for(i in 1:length(files))
@@ -219,37 +224,99 @@ ddpcr.pipeline <- function()
     results[x[,1] < breakpoint.ch1 & x[,2] > breakpoint.ch2] <- ddpcr.colors[4] # ch1-ch2+ : cluster 4
     return(results)
   }
+  dropletcount.clusters <- function(x)
+  {
+    results <- NULL
+    results <- list(clusters=c(cluster.1=sum(x == 1),cluster.2=sum(x == 2),cluster.3=sum(x == 3),cluster.4=sum(x == 4)))
+    results  <- c(results, text=paste("Ch1-Ch2-:",results$clusters[1],
+                             "   Ch1+Ch2-:",results$clusters[2],
+                             "   Ch1+Ch2+:",results$clusters[3],
+                             "   Ch1-Ch2+:",results$clusters[4], sep=""))
+    return(results)
+  }
+  get.max.channels <- function(x)
+  {
+    results <- c(Ch1.max = round(max(x[,1])+100) ,Ch2.max = round(max(x[,2])+100))
+    return(results)
+  }
   
   # - [ ] PIPELINE SETUP
   exp.design <- read.design.file(path=file.path(path$input.data),"design.txt")
   ### CONTROL ANALYSIS
   # - [ ] create check if pos and neg control are available
+  
   # - [x] find control files
   control.files <- exp.design[exp.design$Type == c("pos","neg"),2]
   # - [x] combine control files
-  control.data <- combine.controls(path=file.path(path$input.data),files=control.files)
+  control.data <- combine.samples(path=file.path(path$input.data),files=control.files)
   # - [x] get breakpoint data
   breakpoint.ch1 <- get.breakpoint(x = control.data[,1])
   breakpoint.ch2 <- get.breakpoint(x = control.data[,2])
-  # - [x] get cluster data - mean and sd for the clusters 
-  mean.sd.ch1 <- clusters.mean.sd(x = control.data[,1],breakpoint = breakpoint.ch1)
-  mean.sd.ch2 <- clusters.mean.sd(x = control.data[,2],breakpoint = breakpoint.ch2)
-  
   # - [x] cluster define based on breakpoints - with cluster notation BioRad 
   control.data <- define.clusters(control.data, breakpoint.ch1, breakpoint.ch2)
-  col.vec <- define.color(control.data, breakpoint.ch1, breakpoint.ch2)
-  # - [x] plot the data
-  plot(y=control.data[,1],x=control.data[,2], cex=0.7, col=col.vec, ylab="Ch1 Amplitude",xlab="Ch2 Amplitude", pch=16, main=project,
-         xlim=c(0,max(control.data[,2])),ylim=c(0,max(control.data[,1])))
+  # - [ ] get min and max 
+  all.data <- combine.samples(path=path$input.data,files=exp.design[,2])
+  all.data.max <- get.max.channels(all.data)
+  
+  
+  # - [x] colors defined  breakpoints - with cluster notation BioRad 
+  col.vec <- define.color(control.data, breakpoint.ch1, breakpoint.ch2, density=60)
+  # - [x] droplet count defined by cluster notion BioRad
+  droplet.count <- dropletcount.clusters(control.data$Cluster)$text
+  
+  
+  
+  
+  
+  
+  # - [x] plot the control data
+  sample.name <- gsub(pattern = "_Amplitude.csv",replacement="_Controls",x=sample.files[i])
+  output.file <- file.path(path$output.plot, paste(sample.name,".png",sep=""))
+  png(filename=output.file,width = 800,height = 800)
+  plot(y=control.data[,1],x=control.data[,2], cex=0.7, col=col.vec, ylab="Ch1 Amplitude",xlab="Ch2 Amplitude", pch=16, main=sample.name,
+         xlim=c(0,all.data.max[2]),ylim=c(0,all.data.max[1]))
+  mtext(side = 3,text = droplet.count, cex = 0.8)
   abline(h=breakpoint.ch1, col="red") # channel 1
   abline(v=breakpoint.ch2, col="red") # channel 2
-  
-  selection <- control.data$Cluster == 3
-  points(x = control.data[selection,2], y=control.data[selection,1], col="red")
+  dev.off()
 
-
+  # - [ ] retrieve control data
+  # - [ ] compare control data
+  # - [ ] add control data
+  # - [ ] save control data
   
-  # - [ ] 
+  # - [x] retrieve sample files (all files)
+  sample.files <- exp.design[,2]
+  
+  # - [ ] analyse sample files
+  for(i in 1:length(sample.files))
+  {
+    sample.data <- read.table(file=file.path(path$input.data,sample.files[i]),header = TRUE,sep = ",")
+    sample.data <- define.clusters(sample.data, breakpoint.ch1, breakpoint.ch2)
+    col.vec <- define.color(sample.data, breakpoint.ch1, breakpoint.ch2, density=60)
+    droplet.count <- dropletcount.clusters(sample.data$Cluster)$text
+    
+    sample.name <- gsub(pattern = "_Amplitude.csv",replacement="",x=sample.files[i])
+    output.file <- file.path(path$output.plot, paste(sample.name,".png",sep=""))
+    png(filename = output.file,width = 800,height = 800)
+    plot(y=sample.data[,1],x=sample.data[,2], cex=0.7, col=col.vec, ylab="Ch1 Amplitude",xlab="Ch2 Amplitude", pch=16, main=sample.name,
+         xlim=c(0,max(control.data[,2])),ylim=c(0,max(control.data[,1])))
+    mtext(side = 3,text = droplet.count, cex = 0.8)
+    abline(h=breakpoint.ch1, col="red") # channel 1
+    abline(v=breakpoint.ch2, col="red") # channel 2
+    dev.off()
+  }
+  
+  # - [ ] open all data to get min/max
+  # - [ ] retrieve pos/neg controls
+  # - [ ] analyze pos/neg controls
+  # - [ ] read data 
+  # - [ ] analyze data
+    # - controls or sample
+  # - [ ] store the data to disk
+  # - [ ] plot the data
+  
+  
   
 }
   
