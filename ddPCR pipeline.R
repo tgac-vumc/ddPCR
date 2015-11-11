@@ -1,5 +1,7 @@
 input.path <- "D:\\R SCRIPTS\\ddPCR analysis" #work
 project <- "Test_EGFR_2015-11-03-16-39"
+folders <- c("archive","input.data","output.data","output.plot","scripts","scripts.log")
+
 # FUNCTIONS
 get_comments = function(filename){
   is_assign = function(expr) as.character(expr) %in% c("<-", "<<-", "=", "assign")
@@ -41,41 +43,48 @@ make_doc = function(path = "R", files, package, dest){
   invisible(dest)
 }
 create.folders <- function(path,folders){
-  # - [x] set path
-  # - [x] set folders
-  # - [x] for loooooop
-  for(i in 1:length(folders))
+  if(!file.exists(path))
   {
-    if(!file.exists(file.path(path,as.character(folders[i]))))
+    stop ("Input folder does not exist. \n")
+  }else
+  {
+    for(i in 1:length(folders))
     {
-      dir.create(file.path(path,as.character(folders[i])))
+      if(!file.exists(file.path(path,as.character(folders[i]))))
+      {
+        dir.create(file.path(path,as.character(folders[i])))
+      }
     }
   }
-  
-  # - [x] check file.exists
-  # - [x] create folder
-  # - [x] does it work?
 }
-set.paths <- function(path=""){
+set.paths <- function(path="", folders){
   if(path == "" | class(path) == "numeric"){ stop
   } else {
-    # - [x] set paths
-    paths <- list(archive=file.path(path,"archive"),
-                  input.data=file.path(path,"input.data"),
-                  output.data=file.path(path,"output.data"),
-                  output.plot=file.path(path,"output.plot"),
-                  scripts=file.path(path,"scripts"),
-                  scripts.log= file.path(path,"scripts.log"))
-    # - [x] make list
+    folders <- c("original",folders)
+    paths <- NULL
+    for(i in 1:length(folders))
+    {
+      if(i == 1)
+      {
+        paths <- list(file.path(path))
+      }
+      if(i > 1)
+      {
+        paths <- c(paths,file.path(path,as.character(folders[i])))
+      }
+    }
+    names(paths) <- as.character(folders)
     return(paths)
-    # - [x] return list
   }
 }
 # RUN FUNCTIONS
-create.folders(path=input.path,c("archive","input.data","output.data","output.plot","scripts","scripts.log"))
-path <- set.paths(input.path)
+create.folders(path=input.path,folders=folders)
+path <- set.paths(path=input.path, folders=folders)
 log.file <- paste(format(Sys.time(), "%Y%m%d-%H%M"),"_script_checklist.md",sep="")
 make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
+# END
+
+# RUN FUNCTIONS
 
 archive <- function()
 {
@@ -85,6 +94,28 @@ archive <- function()
   # name/well = sample well name /sample file nae
   # sample type = 'positive', 'sample', 'negative'
   # probe = probe name to select the 'probe file
+  clusters.mean.sd <- function(x,na.rm=TRUE,breakpoint)
+  {
+    clusters <- c(mean(x[x < breakpoint],na.rm=na.rm), sd(x[x < breakpoint],na.rm=na.rm))
+    clusters <- rbind(clusters,c(mean(x[x > breakpoint],na.rm=na.rm), sd(x[x > breakpoint],na.rm=na.rm)))
+    clusters <- cbind(clusters,clusters[,2]*3)
+    rownames(clusters) <- c("cluster1","cluster2");colnames(clusters) <- c("mean","sd","3*sd")
+    return(clusters)
+  }
+  
+  # - [x] find the cut-off values for negative cluster
+  times.sd <- 4
+  
+  ch1.neg.cutoff <- mean.sd.ch1[1,1]+(mean.sd.ch1[1,2] * times.sd)
+  abline(h=ch1.neg.cutoff,col="black")
+  ch2.neg.cutoff <- mean.sd.ch2[1,1]+(mean.sd.ch2[1,2]* times.sd)
+  abline(v=ch2.neg.cutoff,col="black")
+  
+  # - [x] find the cut-off values for ch1 positive
+  ch1.neg.cutoff <- mean.sd.ch1[2,1]-(mean.sd.ch1[2,2] * times.sd)
+  abline(h=ch1.neg.cutoff,col="blue")
+  ch2.neg.cutoff <- mean.sd.ch2[1,1]+(mean.sd.ch2[1,2]* times.sd)
+  abline(v=ch2.neg.cutoff,col="blue")
 }
 
 ddpcr.pipeline <- function()
@@ -166,26 +197,64 @@ ddpcr.pipeline <- function()
     if(dim(breakpoint)[1] == 3){result <- c(mean(breakpoint[1:2,1]),mean(breakpoint[2:3,1]))}
     return(result)
   }
+  define.clusters <- function(x, breakpoint.ch1, breakpoint.ch2)
+  {
+    # - [x] find cluster notation BioRad 
+    results <- rep(NA,dim(x)[1])
+    results[x[,1] < breakpoint.ch1 & x[,2] < breakpoint.ch2] <- 1 # ch1-ch2- : cluster 1
+    results[x[,1] > breakpoint.ch1 & x[,2] < breakpoint.ch2] <- 2 # ch1+ch2- : cluster 2
+    results[x[,1] > breakpoint.ch1 & x[,2] > breakpoint.ch2] <- 3 # ch1+ch2+ : cluster 3
+    results[x[,1] < breakpoint.ch1 & x[,2] > breakpoint.ch2] <- 4 # ch1-ch2+ : cluster 4
+    x[,3] <- results
+    return(x)
+  }
+  define.color <- function(x, breakpoint.ch1, breakpoint.ch2,density=40)
+  {
+    # - [x] find cluster notation BioRad 
+    ddpcr.colors <- paste(c("#000000","#0033FF","#FF6600","#00CC00"), as.character(density), sep="")
+    results <- rep(NA,dim(x)[1])
+    results[x[,1] < breakpoint.ch1 & x[,2] < breakpoint.ch2] <- ddpcr.colors[1] # ch1-ch2- : cluster 1
+    results[x[,1] > breakpoint.ch1 & x[,2] < breakpoint.ch2] <- ddpcr.colors[2] # ch1+ch2- : cluster 2
+    results[x[,1] > breakpoint.ch1 & x[,2] > breakpoint.ch2] <- ddpcr.colors[3] # ch1+ch2+ : cluster 3
+    results[x[,1] < breakpoint.ch1 & x[,2] > breakpoint.ch2] <- ddpcr.colors[4] # ch1-ch2+ : cluster 4
+    return(results)
+  }
   
   # - [ ] PIPELINE SETUP
-  exp.design <- read.design.file(path=file.path(path$input.data,project),"design.txt")
+  exp.design <- read.design.file(path=file.path(path$input.data),"design.txt")
+  ### CONTROL ANALYSIS
+  # - [ ] create check if pos and neg control are available
   # - [x] find control files
   control.files <- exp.design[exp.design$Type == c("pos","neg"),2]
   # - [x] combine control files
-  control.data <- combine.controls(path=file.path(path$input.data,project),files=control.files)
+  control.data <- combine.controls(path=file.path(path$input.data),files=control.files)
   # - [x] get breakpoint data
   breakpoint.ch1 <- get.breakpoint(x = control.data[,1])
   breakpoint.ch2 <- get.breakpoint(x = control.data[,2])
-  # - [x] plot the data
-  plot(y=control.data[,1],x=control.data[,2], cex=0.7, col="#00000040", ylab="Ch2 Amplitude",xlab="Ch1 Amplitude", pch=16,main=Name,
-       xlim=c(0,max(control.data[,2])),ylim=c(0,max(control.data[,1])) )
+  # - [x] get cluster data - mean and sd for the clusters 
+  mean.sd.ch1 <- clusters.mean.sd(x = control.data[,1],breakpoint = breakpoint.ch1)
+  mean.sd.ch2 <- clusters.mean.sd(x = control.data[,2],breakpoint = breakpoint.ch2)
   
+  # - [x] cluster define based on breakpoints - with cluster notation BioRad 
+  control.data <- define.clusters(control.data, breakpoint.ch1, breakpoint.ch2)
+  col.vec <- define.color(control.data, breakpoint.ch1, breakpoint.ch2)
+  # - [x] plot the data
+  plot(y=control.data[,1],x=control.data[,2], cex=0.7, col=col.vec, ylab="Ch1 Amplitude",xlab="Ch2 Amplitude", pch=16, main=project,
+         xlim=c(0,max(control.data[,2])),ylim=c(0,max(control.data[,1])))
   abline(h=breakpoint.ch1, col="red") # channel 1
   abline(v=breakpoint.ch2, col="red") # channel 2
+  
+  selection <- control.data$Cluster == 3
+  points(x = control.data[selection,2], y=control.data[selection,1], col="red")
+
+
+  
+  # - [ ] 
   
 }
   
   
+
   # probe file with probe information
   # date of each data set
   # breakpoint channel 1, multiple (learning)
@@ -258,4 +327,4 @@ ddpcr.pipeline <- function()
   # - [ ] 
   
   
-}
+
