@@ -1,5 +1,4 @@
 input.path <- "D:\\R SCRIPTS\\ddPCR analysis" #work
-project <- "EGFR_test"
 folders <- c("archive","input.data","output.data","output.plot","scripts","scripts.log")
 
 # FUNCTIONS
@@ -199,10 +198,16 @@ ddpcr.pipeline <- function()
       # - [ ] save probe file
     }
   }
-  read.design.file <- function(path,file)
+  read.design.file <- function(path,pattern=NULL)
   {
-    design <- read.table(file = file.path(path,file),header = TRUE,sep = "\t")
-    return(design)
+    design.file <- list.files(path=path,pattern=pattern)
+    if(length(design.file) > 1){
+      stop("multiple design files found. Unable to continue.\n"
+      )
+    }else{
+      design <- read.table(file = file.path(path,design.file),header = TRUE,sep = "\t")
+      return(design)
+    }
   }
   combine.samples <- function(path,files)
   {
@@ -278,13 +283,16 @@ ddpcr.pipeline <- function()
     }
   }
   
-
+  ##### SET PROJECT PATH
+  project.path <- "D:\\R SCRIPTS\\ddPCR analysis\\EGFR_test"
+  control.data.path <- 
+  
   # - [ ] PIPELINE SETUP
-   create.design.file(path$input.data)
+  create.design.file(project.path)
   # - [ ] start global analysis for experiment
-  exp.design <- read.design.file(path=file.path(path$input.data),"design.txt")
+  exp.design <- read.design.file(path=project.path,pattern="design")
   # - [ ] get min and max 
-  all.data <- combine.samples(path=path$input.data,files=exp.design[,2])
+  all.data <- combine.samples(path=project.path,files=exp.design[,2])
   all.data.max <- get.max.channels(all.data)
 
   ### start CONTROL ANALYSIS for analysis
@@ -293,7 +301,7 @@ ddpcr.pipeline <- function()
   # - [x] find control files
   control.files <- exp.design[exp.design$Type == c("pos","neg"),2]
   # - [x] combine control files
-  control.data <- combine.samples(path=file.path(path$input.data),files=control.files)
+  control.data <- combine.samples(path=project.path,files=control.files)
   # - [x] get breakpoint data
   breakpoint.ch1 <- get.breakpoint(x = control.data[,1])
   breakpoint.ch2 <- get.breakpoint(x = control.data[,2])
@@ -323,7 +331,7 @@ ddpcr.pipeline <- function()
   # - [ ] analyse sample files
   for(i in 1:length(sample.files))
   {
-    sample.data <- read.table(file=file.path(path$input.data,sample.files[i]),header = TRUE,sep = ",")
+    sample.data <- read.table(file=file.path(project.path,sample.files[i]),header = TRUE,sep = ",")
     sample.data <- define.clusters(sample.data, breakpoint.ch1, breakpoint.ch2)
     col.vec <- define.color(sample.data[,3], density=60)
     droplet.count <- dropletcount.clusters(sample.data$Cluster)$text
