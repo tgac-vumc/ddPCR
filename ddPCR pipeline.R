@@ -96,7 +96,17 @@ archive <- function()
   # probe = probe name to select the 'probe file
   # - [x] get cluster data - mean and sd for the clusters 
 
-  
+  define.color <- function(x, breakpoint.ch1, breakpoint.ch2,density=40)
+  {
+    # - [x] find cluster notation BioRad 
+    ddpcr.colors <- paste(c("#000000","#0033FF","#FF6600","#00CC00"), as.character(density), sep="")
+    results <- rep(NA,dim(x)[1])
+    results[x[,1] < breakpoint.ch1 & x[,2] < breakpoint.ch2] <- ddpcr.colors[1] # ch1-ch2- : cluster 1
+    results[x[,1] > breakpoint.ch1 & x[,2] < breakpoint.ch2] <- ddpcr.colors[2] # ch1+ch2- : cluster 2
+    results[x[,1] > breakpoint.ch1 & x[,2] > breakpoint.ch2] <- ddpcr.colors[3] # ch1+ch2+ : cluster 3
+    results[x[,1] < breakpoint.ch1 & x[,2] > breakpoint.ch2] <- ddpcr.colors[4] # ch1-ch2+ : cluster 4
+    return(results)
+  }
   clusters.mean.sd <- function(x,na.rm=TRUE,breakpoint)
   {
     clusters <- c(mean(x[x < breakpoint],na.rm=na.rm), sd(x[x < breakpoint],na.rm=na.rm))
@@ -126,6 +136,17 @@ archive <- function()
 ddpcr.pipeline <- function()
   {
   # - [ ] PIPELINE FUNCTIONS
+  mgsub <- function(pattern, replacement, x, ...) 
+  {
+    if (length(pattern)!=length(replacement)) {
+      stop("pattern and replacement do not have the same length.")
+    }
+    result <- x
+    for (i in 1:length(pattern)) {
+      result <- gsub(pattern[i], replacement[i], result, ...)
+    }
+    result
+  }
   create.design.file <- function(path)
   {
     # - [x] create design file for experiment
@@ -213,16 +234,13 @@ ddpcr.pipeline <- function()
     x[,3] <- results
     return(x)
   }
-  define.color <- function(x, breakpoint.ch1, breakpoint.ch2,density=40)
+  define.color <- function(x,density=40)
   {
     # - [x] find cluster notation BioRad 
-    ddpcr.colors <- paste(c("#000000","#0033FF","#FF6600","#00CC00"), as.character(density), sep="")
-    results <- rep(NA,dim(x)[1])
-    results[x[,1] < breakpoint.ch1 & x[,2] < breakpoint.ch2] <- ddpcr.colors[1] # ch1-ch2- : cluster 1
-    results[x[,1] > breakpoint.ch1 & x[,2] < breakpoint.ch2] <- ddpcr.colors[2] # ch1+ch2- : cluster 2
-    results[x[,1] > breakpoint.ch1 & x[,2] > breakpoint.ch2] <- ddpcr.colors[3] # ch1+ch2+ : cluster 3
-    results[x[,1] < breakpoint.ch1 & x[,2] > breakpoint.ch2] <- ddpcr.colors[4] # ch1-ch2+ : cluster 4
-    return(results)
+    ddpcr.colors <- paste(c("#000000","#FF6600","#00CC00","#0033FF"), as.character(density), sep="")
+    x <- as.character(x)
+    x <- mgsub(pattern = c("1","3","4","2"),replacement = ddpcr.colors,x=x)
+    return(x)
   }
   dropletcount.clusters <- function(x)
   {
@@ -239,10 +257,37 @@ ddpcr.pipeline <- function()
     results <- c(Ch1.max = round(max(x[,1])+100) ,Ch2.max = round(max(x[,2])+100))
     return(results)
   }
+  plot.ddpcr <- function(x,dotres=0.7,main="ddPCR",pch=16,colors="ddpcr",density=60,breakpoint.ch1=NULL,breakpoint.ch2=NULL,xmax=NULL,ymax=NULL,verbose=FALSE)
+  {
+    if(class(xmax) == "NULL") {
+      xmax <- max(x[,2])
+    }
+    if(class(ymax) == "NULL") {
+      xmax <- max(x[,1])
+    }
+    col.vec <- define.color(x = x[,3],density = density)
+    plot(y=x[,1],x=x[,2], cex=dotres, col=col.vec, ylab="Ch1 Amplitude",xlab="Ch2 Amplitude", pch=pch, main=main,
+         xlim=c(0,xmax),ylim=c(0,ymax))
+    sub.text <- dropletcount.clusters(x=x[,3])$text
+    mtext(side = 3,text = sub.text, cex = 0.8)
+    if(class(breakpoint.ch1) == "NULL" | class(breakpoint.ch2) == "NULL") {
+      if(verbose == TRUE){cat("No breakpoint data has been given. Data will not be plotted.")}
+    }else{
+      abline(h=breakpoint.ch1, col="red") # channel 1
+      abline(v=breakpoint.ch2, col="red") # channel 2
+    }
+  }
   
+
   # - [ ] PIPELINE SETUP
+   create.design.file(path$input.data)
+  # - [ ] start global analysis for experiment
   exp.design <- read.design.file(path=file.path(path$input.data),"design.txt")
-  ### CONTROL ANALYSIS
+  # - [ ] get min and max 
+  all.data <- combine.samples(path=path$input.data,files=exp.design[,2])
+  all.data.max <- get.max.channels(all.data)
+
+  ### start CONTROL ANALYSIS for analysis
   # - [ ] create check if pos and neg control are available
   
   # - [x] find control files
@@ -254,30 +299,17 @@ ddpcr.pipeline <- function()
   breakpoint.ch2 <- get.breakpoint(x = control.data[,2])
   # - [x] cluster define based on breakpoints - with cluster notation BioRad 
   control.data <- define.clusters(control.data, breakpoint.ch1, breakpoint.ch2)
-  # - [ ] get min and max 
-  all.data <- combine.samples(path=path$input.data,files=exp.design[,2])
-  all.data.max <- get.max.channels(all.data)
-  
-  
   # - [x] colors defined  breakpoints - with cluster notation BioRad 
-  col.vec <- define.color(control.data, breakpoint.ch1, breakpoint.ch2, density=60)
+  col.vec <- define.color(control.data[,3], density=60)
   # - [x] droplet count defined by cluster notion BioRad
   droplet.count <- dropletcount.clusters(control.data$Cluster)$text
   
-  
-  
-  
-  
-  
-  # - [x] plot the control data
-  sample.name <- gsub(pattern = "_Amplitude.csv",replacement="_Controls",x=sample.files[i])
-  output.file <- file.path(path$output.plot, paste(sample.name,".png",sep=""))
+  # - [x] set file name control sample 
+  control.name <- paste(strsplit(x = as.character(control.files[1]),split = "_")[[1]][1],"_Controls",sep="")
+  output.file <- file.path(path$output.plot, paste(control.name,".png",sep=""))
+  # - [x] create plot for control data
   png(filename=output.file,width = 800,height = 800)
-  plot(y=control.data[,1],x=control.data[,2], cex=0.7, col=col.vec, ylab="Ch1 Amplitude",xlab="Ch2 Amplitude", pch=16, main=sample.name,
-         xlim=c(0,all.data.max[2]),ylim=c(0,all.data.max[1]))
-  mtext(side = 3,text = droplet.count, cex = 0.8)
-  abline(h=breakpoint.ch1, col="red") # channel 1
-  abline(v=breakpoint.ch2, col="red") # channel 2
+  plot.ddpcr(x=control.data,main=control.name,xmax=all.data.max[2],ymax=all.data.max[1],breakpoint.ch1 = breakpoint.ch1 ,breakpoint.ch2 = breakpoint.ch2 )
   dev.off()
 
   # - [ ] retrieve control data
@@ -293,17 +325,14 @@ ddpcr.pipeline <- function()
   {
     sample.data <- read.table(file=file.path(path$input.data,sample.files[i]),header = TRUE,sep = ",")
     sample.data <- define.clusters(sample.data, breakpoint.ch1, breakpoint.ch2)
-    col.vec <- define.color(sample.data, breakpoint.ch1, breakpoint.ch2, density=60)
+    col.vec <- define.color(sample.data[,3], density=60)
     droplet.count <- dropletcount.clusters(sample.data$Cluster)$text
     
     sample.name <- gsub(pattern = "_Amplitude.csv",replacement="",x=sample.files[i])
     output.file <- file.path(path$output.plot, paste(sample.name,".png",sep=""))
-    png(filename = output.file,width = 800,height = 800)
-    plot(y=sample.data[,1],x=sample.data[,2], cex=0.7, col=col.vec, ylab="Ch1 Amplitude",xlab="Ch2 Amplitude", pch=16, main=sample.name,
-         xlim=c(0,max(control.data[,2])),ylim=c(0,max(control.data[,1])))
-    mtext(side = 3,text = droplet.count, cex = 0.8)
-    abline(h=breakpoint.ch1, col="red") # channel 1
-    abline(v=breakpoint.ch2, col="red") # channel 2
+    
+    png(filename=output.file,width = 800,height = 800)
+    plot.ddpcr(x=sample.data,main=sample.name,xmax=all.data.max[2],ymax=all.data.max[1],breakpoint.ch1 = breakpoint.ch1 ,breakpoint.ch2 = breakpoint.ch2 )
     dev.off()
   }
   
