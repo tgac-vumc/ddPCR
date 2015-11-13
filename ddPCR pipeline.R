@@ -83,8 +83,6 @@ log.file <- paste(format(Sys.time(), "%Y%m%d-%H%M"),"_script_checklist.md",sep="
 make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
 # END
 
-# RUN FUNCTIONS
-
 archive <- function()
 {
   # "design file" with sample information
@@ -146,7 +144,7 @@ ddpcr.pipeline <- function()
     }
     result
   }
-  create.design.file <- function(path)
+  create.design.file <- function(path,probe="probe")
   {
     # - [x] create design file for experiment
     amplitude.files <- list.files(path = path, pattern = "_Amplitude.csv")
@@ -156,7 +154,7 @@ ddpcr.pipeline <- function()
     design[,1] <- sample.names
     design[,2] <- amplitude.files
     design[,3] <- "pos-neg-sample"
-    design[,4] <- "probe_name"
+    design[,4] <- probe
     output.file <- file.path(path,"design.txt")
     write.table(file = output.file,x = design,quote = FALSE,sep = "\t",row.names = FALSE)
   }
@@ -197,6 +195,26 @@ ddpcr.pipeline <- function()
       # - [ ] add probe data to file
       # - [ ] save probe file
     }
+  }
+  add.probe.data.v2 <- function(path,name=NA,date=NA,breakpoints=c(NA,NA))
+  {
+    name <- tolower(name)
+    probe.file <- file.path(path,paste(name,".Rdata",sep=""))
+    if(!file.exists(probe.file)){
+      col.names <- c("Ch1","Ch2")
+      probe.data <- list( name = name,
+                          date = date,
+                          breakpoints = matrix(data = breakpoints, nrow = 1, ncol = 2,dimnames = list(NULL,col.names))
+      )
+      save(probe.data, file=probe.file)
+    }else{
+      load(probe.file)
+      probe.data$name <- rbind(probe.data$name,name)
+      probe.data$date <- rbind(probe.data$date,date)
+      probe.data$breakpoints <- rbind(probe.data$breakpoints,breakpoints)
+      save(probe.data, file=probe.file)
+    }
+    return(probe.data)
   }
   read.design.file <- function(path,pattern=NULL)
   {
@@ -252,8 +270,8 @@ ddpcr.pipeline <- function()
   get.breakpoint.v4 <- function(x)
   { # use hist function to determine locations with no droplets (middle?)
     x <- as.numeric(x)
-    hist.data <- rbind(hist(x, breaks=15)$mids, hist(x, breaks=15)$counts)
-    hist.data <- hist.data[,-c(1:2)]
+    hist.data <- rbind(hist(x, breaks=15, plot=FALSE)$mids, hist(x, breaks=15, plot=FALSE)$counts)
+    hist.data <- hist.data[,-c(1:2,14:16)]
     result <- mean(hist.data[1,hist.data[2,] == min(hist.data[2,])])
     return(result)
   }
@@ -320,7 +338,7 @@ ddpcr.pipeline <- function()
       abline(v=breakpoints[2], col="red") # channel 2
     }
   }
-  ddpcr.analysis <- function(path)
+  ddpcr.analysis <- function(path,probe.path)
   {
     # - [ ] start global analysis for experiment
     exp.design <- read.design.file(path=path,pattern="design")
@@ -333,6 +351,10 @@ ddpcr.pipeline <- function()
     control.data <- combine.samples(path=path,files=control.files)
     # - [x] get breakpoint data
     breakpoints <- get.ddpcr.breakpoints.v4(x = control.data)
+    # - [x] add probe data
+    all.probe.data <- add.probe.data.v2(path = probe.path, name = exp.design[1,4], date = format(Sys.time(), "%Y-%m-%d"), breakpoints = breakpoints)
+    # - [ ] check for probe breakpoints deviation
+    
     # - [x] cluster define based on breakpoints - with cluster notation BioRad 
     control.data <- define.clusters(control.data, breakpoints)
     # - [x] colors defined  breakpoints - with cluster notation BioRad 
@@ -366,9 +388,11 @@ ddpcr.pipeline <- function()
     }
   }
   # - [ ] PIPELINE SETUP
-  create.design.file(project.path)
+  create.design.file(project.path,probe = "test")
   
   ##### SET PROJECT PATH
+  probe.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/probe.data"
+  
   project.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\E746_A750del"
   ddpcr.analysis(path = project.path)
   project.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\L858R"
@@ -382,7 +406,8 @@ ddpcr.pipeline <- function()
   ddpcr.analysis(path = project.path)
   project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/T790M"
   ddpcr.analysis(path = project.path)
-
+  project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/test"
+  ddpcr.analysis(path = project.path)
   
   ### start CONTROL ANALYSIS for analysis
   # - [ ] change function 'add.probe.data'
@@ -395,6 +420,7 @@ ddpcr.pipeline <- function()
   ### STUFF STILL TO DO
   # - [ ] save plots in plot folder automatically
   # - [ ] save processed data files in folder
+  # - [ ] change breakpoint v4: use mean neg droplets as minimum value for finding breakpoint
 }
   
   
