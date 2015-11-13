@@ -225,13 +225,38 @@ ddpcr.pipeline <- function()
     result <- NULL
     breakpoint <- kmeans(x=x,centers=nClusters)$centers
     if(dim(breakpoint)[1] == 2){result <- mean(breakpoint)}
-    if(dim(breakpoint)[1] == 3){result <- c(mean(breakpoint[1:2,1]),mean(breakpoint[2:3,1]))}
     return(result)
   }
   get.ddpcr.breakpoints <- function(x)
   {
     results <- c(breakpoint.ch1 = get.breakpoint(x = x[,1]) ,breakpoint.ch2 = get.breakpoint(x = x[,2]))
     return(results)
+  }
+  get.breakpoint.v2 <- function(x)
+  { # use min/max function
+    x <- as.numeric(x)
+    result <- NULL
+    result <-  (max(x) - min(x))/2
+    return(result)
+  }
+  get.ddpcr.breakpoints.v2 <- function(x)
+  { # use the min/max function 
+    results <- c(breakpoint.ch1 = get.breakpoint.v2(x = x[,1]) ,breakpoint.ch2 = get.breakpoint.v2(x = x[,2]))
+    return(results)
+  }
+  get.ddpcr.breakpoints.v3 <- function(x)
+  { # use kmeans on x & y together, and set for finding 4 clusters
+    results <- kmeans(x[,1:2], 4)
+    return(results)
+  }
+  get.breakpoint.v4 <- function(x)
+  { # use hist function to determine locations with no droplets (middle?)
+    x <- as.numeric(x)
+    result <- NULL
+    temp.1 <- rbind(hist(x[,1], breaks=15)$mids, hist(x[,1], breaks=15)$counts)
+    temp.1 <- temp.1[1,temp.1[,temp.1[2,] == 0]]
+    result <-  (max(x[,2])/2) + (min(x[,2])/2)
+    return(result)
   }
   define.clusters <- function(x, breakpoints)
   {
@@ -270,7 +295,7 @@ ddpcr.pipeline <- function()
     results <- c(Ch1.max = round(max(x[,1])+100) ,Ch2.max = round(max(x[,2])+100))
     return(results)
   }
-  plot.ddpcr <- function(x,dotres=0.7,main="ddPCR",pch=16,colors="ddpcr",density=60,breakpoints,max.xy,verbose=FALSE)
+  plot.ddpcr <- function(x,dotres=0.7,main="ddPCR",pch=16,colors="ddpcr",density=60,breakpoints=NULL,max.xy=NULL,verbose=FALSE)
   {
     if(length(max.xy) != 2) {
       xmax <- max(x[,2])
@@ -291,25 +316,19 @@ ddpcr.pipeline <- function()
       abline(v=breakpoints[2], col="red") # channel 2
     }
   }
-  
-  ##### SET PROJECT PATH
-  project.path <- "D:\\R SCRIPTS\\ddPCR analysis\\EGFR_test"
-  control.data.path <- 
-  
-  # - [ ] PIPELINE SETUP
-  create.design.file(project.path)
-  ddpcr.analysis <- function(path){
+  ddpcr.analysis <- function(path)
+  {
     # - [ ] start global analysis for experiment
-    exp.design <- read.design.file(path=project.path,pattern="design")
+    exp.design <- read.design.file(path=path,pattern="design")
     # - [ ] get min and max 
-    all.data <- combine.samples(path=project.path,files=exp.design[,2])
+    all.data <- combine.samples(path=path,files=exp.design[,2])
     data.xy.max <- get.max.channels(all.data)
     # - [x] find control files
-    control.files <- exp.design[exp.design$Type == c("pos","neg"),2]
+    control.files <- exp.design[exp.design$Type == "pos" | exp.design$Type == "neg",2]
     # - [x] combine control files
-    control.data <- combine.samples(path=project.path,files=control.files)
+    control.data <- combine.samples(path=path,files=control.files)
     # - [x] get breakpoint data
-    breakpoints <- get.ddpcr.breakpoint(x = control.data)
+    breakpoints <- get.ddpcr.breakpoints.v3(x = control.data)
     # - [x] cluster define based on breakpoints - with cluster notation BioRad 
     control.data <- define.clusters(control.data, breakpoints)
     # - [x] colors defined  breakpoints - with cluster notation BioRad 
@@ -329,8 +348,8 @@ ddpcr.pipeline <- function()
     # - [ ] analyse sample files
     for(i in 1:length(sample.files))
     {
-      sample.data <- read.table(file=file.path(project.path,sample.files[i]),header = TRUE,sep = ",")
-      sample.data <- define.clusters(sample.data, breakpoint.ch1, breakpoint.ch2)
+      sample.data <- read.table(file=file.path(path,sample.files[i]),header = TRUE,sep = ",")
+      sample.data <- define.clusters(sample.data, breakpoints)
       col.vec <- define.color(sample.data[,3], density=60)
       droplet.count <- dropletcount.clusters(sample.data$Cluster)$text
       
@@ -341,8 +360,19 @@ ddpcr.pipeline <- function()
       plot.ddpcr(x=sample.data, main=sample.name, max.xy = data.xy.max, breakpoints = breakpoints)
       dev.off()
     }
-    
   }
+  # - [ ] PIPELINE SETUP
+  create.design.file(project.path)
+  
+  ##### SET PROJECT PATH
+  project.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\E746_A750del"
+  ddpcr.analysis(path = project.path)
+  project.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\L858R"
+  ddpcr.analysis(path = project.path)
+  project.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\T790M"
+  ddpcr.analysis(path = project.path)
+  
+
   
   ### start CONTROL ANALYSIS for analysis
   # - [ ] change function 'add.probe.data'
