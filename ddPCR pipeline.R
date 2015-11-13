@@ -252,11 +252,15 @@ ddpcr.pipeline <- function()
   get.breakpoint.v4 <- function(x)
   { # use hist function to determine locations with no droplets (middle?)
     x <- as.numeric(x)
-    result <- NULL
-    temp.1 <- rbind(hist(x[,1], breaks=15)$mids, hist(x[,1], breaks=15)$counts)
-    temp.1 <- temp.1[1,temp.1[,temp.1[2,] == 0]]
-    result <-  (max(x[,2])/2) + (min(x[,2])/2)
+    hist.data <- rbind(hist(x, breaks=15)$mids, hist(x, breaks=15)$counts)
+    hist.data <- hist.data[,-c(1:2)]
+    result <- mean(hist.data[1,hist.data[2,] == min(hist.data[2,])])
     return(result)
+  }
+  get.ddpcr.breakpoints.v4 <- function(x)
+  { # use the hist function 
+    results <- c(breakpoint.ch1 = get.breakpoint.v4(x = x[,1]) ,breakpoint.ch2 = get.breakpoint.v4(x = x[,2]))
+    return(results)
   }
   define.clusters <- function(x, breakpoints)
   {
@@ -328,7 +332,7 @@ ddpcr.pipeline <- function()
     # - [x] combine control files
     control.data <- combine.samples(path=path,files=control.files)
     # - [x] get breakpoint data
-    breakpoints <- get.ddpcr.breakpoints.v3(x = control.data)
+    breakpoints <- get.ddpcr.breakpoints.v4(x = control.data)
     # - [x] cluster define based on breakpoints - with cluster notation BioRad 
     control.data <- define.clusters(control.data, breakpoints)
     # - [x] colors defined  breakpoints - with cluster notation BioRad 
@@ -372,6 +376,12 @@ ddpcr.pipeline <- function()
   project.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\T790M"
   ddpcr.analysis(path = project.path)
   
+  project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/L858R"
+  ddpcr.analysis(path = project.path)
+  project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/E746_A750del"
+  ddpcr.analysis(path = project.path)
+  project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/T790M"
+  ddpcr.analysis(path = project.path)
 
   
   ### start CONTROL ANALYSIS for analysis
