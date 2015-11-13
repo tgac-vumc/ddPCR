@@ -228,14 +228,22 @@ ddpcr.pipeline <- function()
     if(dim(breakpoint)[1] == 3){result <- c(mean(breakpoint[1:2,1]),mean(breakpoint[2:3,1]))}
     return(result)
   }
-  define.clusters <- function(x, breakpoint.ch1, breakpoint.ch2)
+  get.ddpcr.breakpoints <- function(x)
   {
+    results <- c(breakpoint.ch1 = get.breakpoint(x = x[,1]) ,breakpoint.ch2 = get.breakpoint(x = x[,2]))
+    return(results)
+  }
+  define.clusters <- function(x, breakpoints)
+  {
+    if (length(breakpoints) != 2) {
+      stop("breakpoints must have a length of 2.\n")
+    }
     # - [x] find cluster notation BioRad 
     results <- rep(NA,dim(x)[1])
-    results[x[,1] < breakpoint.ch1 & x[,2] < breakpoint.ch2] <- 1 # ch1-ch2- : cluster 1
-    results[x[,1] > breakpoint.ch1 & x[,2] < breakpoint.ch2] <- 2 # ch1+ch2- : cluster 2
-    results[x[,1] > breakpoint.ch1 & x[,2] > breakpoint.ch2] <- 3 # ch1+ch2+ : cluster 3
-    results[x[,1] < breakpoint.ch1 & x[,2] > breakpoint.ch2] <- 4 # ch1-ch2+ : cluster 4
+    results[x[,1] < breakpoints[1] & x[,2] < breakpoints[2]] <- 1 # ch1-ch2- : cluster 1
+    results[x[,1] > breakpoints[1] & x[,2] < breakpoints[2]] <- 2 # ch1+ch2- : cluster 2
+    results[x[,1] > breakpoints[1] & x[,2] > breakpoints[2]] <- 3 # ch1+ch2+ : cluster 3
+    results[x[,1] < breakpoints[1] & x[,2] > breakpoints[2]] <- 4 # ch1-ch2+ : cluster 4
     x[,3] <- results
     return(x)
   }
@@ -262,24 +270,25 @@ ddpcr.pipeline <- function()
     results <- c(Ch1.max = round(max(x[,1])+100) ,Ch2.max = round(max(x[,2])+100))
     return(results)
   }
-  plot.ddpcr <- function(x,dotres=0.7,main="ddPCR",pch=16,colors="ddpcr",density=60,breakpoint.ch1=NULL,breakpoint.ch2=NULL,xmax=NULL,ymax=NULL,verbose=FALSE)
+  plot.ddpcr <- function(x,dotres=0.7,main="ddPCR",pch=16,colors="ddpcr",density=60,breakpoints,max.xy,verbose=FALSE)
   {
-    if(class(xmax) == "NULL") {
+    if(length(max.xy) != 2) {
       xmax <- max(x[,2])
-    }
-    if(class(ymax) == "NULL") {
-      xmax <- max(x[,1])
+      ymax <- max(x[,1])
+    } else {
+      xmax <- max.xy[2]
+      ymax <- max.xy[1]
     }
     col.vec <- define.color(x = x[,3],density = density)
     plot(y=x[,1],x=x[,2], cex=dotres, col=col.vec, ylab="Ch1 Amplitude",xlab="Ch2 Amplitude", pch=pch, main=main,
          xlim=c(0,xmax),ylim=c(0,ymax))
     sub.text <- dropletcount.clusters(x=x[,3])$text
     mtext(side = 3,text = sub.text, cex = 0.8)
-    if(class(breakpoint.ch1) == "NULL" | class(breakpoint.ch2) == "NULL") {
+    if (length(breakpoints) != 2) {
       if(verbose == TRUE){cat("No breakpoint data has been given. Data will not be plotted.")}
     }else{
-      abline(h=breakpoint.ch1, col="red") # channel 1
-      abline(v=breakpoint.ch2, col="red") # channel 2
+      abline(h=breakpoints[1], col="red") # channel 1
+      abline(v=breakpoints[2], col="red") # channel 2
     }
   }
   
@@ -289,72 +298,63 @@ ddpcr.pipeline <- function()
   
   # - [ ] PIPELINE SETUP
   create.design.file(project.path)
-  # - [ ] start global analysis for experiment
-  exp.design <- read.design.file(path=project.path,pattern="design")
-  # - [ ] get min and max 
-  all.data <- combine.samples(path=project.path,files=exp.design[,2])
-  all.data.max <- get.max.channels(all.data)
-
+  ddpcr.analysis <- function(path){
+    # - [ ] start global analysis for experiment
+    exp.design <- read.design.file(path=project.path,pattern="design")
+    # - [ ] get min and max 
+    all.data <- combine.samples(path=project.path,files=exp.design[,2])
+    data.xy.max <- get.max.channels(all.data)
+    # - [x] find control files
+    control.files <- exp.design[exp.design$Type == c("pos","neg"),2]
+    # - [x] combine control files
+    control.data <- combine.samples(path=project.path,files=control.files)
+    # - [x] get breakpoint data
+    breakpoints <- get.ddpcr.breakpoint(x = control.data)
+    # - [x] cluster define based on breakpoints - with cluster notation BioRad 
+    control.data <- define.clusters(control.data, breakpoints)
+    # - [x] colors defined  breakpoints - with cluster notation BioRad 
+    col.vec <- define.color(control.data[,3], density=60)
+    # - [x] droplet count defined by cluster notion BioRad
+    droplet.count <- dropletcount.clusters(control.data$Cluster)$text
+    # - [x] set file name control sample 
+    control.name <- paste(strsplit(x = as.character(control.files[1]),split = "_")[[1]][1],"_Controls",sep="")
+    output.file <- file.path(project.path, paste(control.name,".png",sep=""))
+    # - [x] create plot for control data
+    png(filename=output.file,width = 800,height = 800)
+    plot.ddpcr(x=control.data, main=control.name, max.xy=data.xy.max, breakpoints=breakpoints)
+    dev.off()
+    
+    # - [x] retrieve sample files (all files)
+    sample.files <- exp.design[,2]
+    # - [ ] analyse sample files
+    for(i in 1:length(sample.files))
+    {
+      sample.data <- read.table(file=file.path(project.path,sample.files[i]),header = TRUE,sep = ",")
+      sample.data <- define.clusters(sample.data, breakpoint.ch1, breakpoint.ch2)
+      col.vec <- define.color(sample.data[,3], density=60)
+      droplet.count <- dropletcount.clusters(sample.data$Cluster)$text
+      
+      sample.name <- gsub(pattern = "_Amplitude.csv",replacement="",x=sample.files[i])
+      output.file <- file.path(project.path, paste(sample.name,".png",sep=""))
+      
+      png(filename=output.file,width = 800,height = 800)
+      plot.ddpcr(x=sample.data, main=sample.name, max.xy = data.xy.max, breakpoints = breakpoints)
+      dev.off()
+    }
+    
+  }
+  
   ### start CONTROL ANALYSIS for analysis
+  # - [ ] change function 'add.probe.data'
   # - [ ] create check if pos and neg control are available
-  
-  # - [x] find control files
-  control.files <- exp.design[exp.design$Type == c("pos","neg"),2]
-  # - [x] combine control files
-  control.data <- combine.samples(path=project.path,files=control.files)
-  # - [x] get breakpoint data
-  breakpoint.ch1 <- get.breakpoint(x = control.data[,1])
-  breakpoint.ch2 <- get.breakpoint(x = control.data[,2])
-  # - [x] cluster define based on breakpoints - with cluster notation BioRad 
-  control.data <- define.clusters(control.data, breakpoint.ch1, breakpoint.ch2)
-  # - [x] colors defined  breakpoints - with cluster notation BioRad 
-  col.vec <- define.color(control.data[,3], density=60)
-  # - [x] droplet count defined by cluster notion BioRad
-  droplet.count <- dropletcount.clusters(control.data$Cluster)$text
-  
-  # - [x] set file name control sample 
-  control.name <- paste(strsplit(x = as.character(control.files[1]),split = "_")[[1]][1],"_Controls",sep="")
-  output.file <- file.path(path$output.plot, paste(control.name,".png",sep=""))
-  # - [x] create plot for control data
-  png(filename=output.file,width = 800,height = 800)
-  plot.ddpcr(x=control.data,main=control.name,xmax=all.data.max[2],ymax=all.data.max[1],breakpoint.ch1 = breakpoint.ch1 ,breakpoint.ch2 = breakpoint.ch2 )
-  dev.off()
-
   # - [ ] retrieve control data
   # - [ ] compare control data
   # - [ ] add control data
   # - [ ] save control data
   
-  # - [x] retrieve sample files (all files)
-  sample.files <- exp.design[,2]
-  
-  # - [ ] analyse sample files
-  for(i in 1:length(sample.files))
-  {
-    sample.data <- read.table(file=file.path(project.path,sample.files[i]),header = TRUE,sep = ",")
-    sample.data <- define.clusters(sample.data, breakpoint.ch1, breakpoint.ch2)
-    col.vec <- define.color(sample.data[,3], density=60)
-    droplet.count <- dropletcount.clusters(sample.data$Cluster)$text
-    
-    sample.name <- gsub(pattern = "_Amplitude.csv",replacement="",x=sample.files[i])
-    output.file <- file.path(path$output.plot, paste(sample.name,".png",sep=""))
-    
-    png(filename=output.file,width = 800,height = 800)
-    plot.ddpcr(x=sample.data,main=sample.name,xmax=all.data.max[2],ymax=all.data.max[1],breakpoint.ch1 = breakpoint.ch1 ,breakpoint.ch2 = breakpoint.ch2 )
-    dev.off()
-  }
-  
-  # - [ ] open all data to get min/max
-  # - [ ] retrieve pos/neg controls
-  # - [ ] analyze pos/neg controls
-  # - [ ] read data 
-  # - [ ] analyze data
-    # - controls or sample
-  # - [ ] store the data to disk
-  # - [ ] plot the data
-  
-  
-  
+  ### STUFF STILL TO DO
+  # - [ ] save plots in plot folder automatically
+  # - [ ] save processed data files in folder
 }
   
   
