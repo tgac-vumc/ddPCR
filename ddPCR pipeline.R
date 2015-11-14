@@ -401,13 +401,13 @@ ddpcr.pipeline <- function()
   ddpcr.analysis(path = project.path)
   
   project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/L858R"
-  ddpcr.analysis(path = project.path)
+  ddpcr.analysis(path = project.path, probe.path = probe.path)
   project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/E746_A750del"
-  ddpcr.analysis(path = project.path)
+  ddpcr.analysis(path = project.path, probe.path = probe.path)
   project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/T790M"
-  ddpcr.analysis(path = project.path)
+  ddpcr.analysis(path = project.path, probe.path = probe.path)
   project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/test"
-  ddpcr.analysis(path = project.path)
+  ddpcr.analysis(path = project.path, probe.path = probe.path)
   
   ### start CONTROL ANALYSIS for analysis
   # - [ ] change function 'add.probe.data'
@@ -421,7 +421,8 @@ ddpcr.pipeline <- function()
   # - [ ] save plots in plot folder automatically
   # - [ ] save processed data files in folder
   # - [ ] change breakpoint v4: use mean neg droplets as minimum value for finding breakpoint
-}
+  # - [ ] use hist & hist$density to determine the cluster mean of the negative cluster. With the breakpoints, find the negative cluster 3sd values.
+ }
   
   
 
