@@ -308,10 +308,10 @@ ddpcr.pipeline <- function()
   {
     results <- NULL
     results <- list(clusters=c(cluster.1=sum(x == 1),cluster.2=sum(x == 2),cluster.3=sum(x == 3),cluster.4=sum(x == 4)))
-    results  <- c(results, text=paste("Ch1-Ch2-:",results$clusters[1],
+    results  <-paste("Ch1-Ch2-:",results$clusters[1],
                              "   Ch1+Ch2-:",results$clusters[2],
                              "   Ch1+Ch2+:",results$clusters[3],
-                             "   Ch1-Ch2+:",results$clusters[4], sep=""))
+                             "   Ch1-Ch2+:",results$clusters[4], sep="")
     return(results)
   }
   get.max.channels <- function(x)
@@ -344,22 +344,28 @@ ddpcr.pipeline <- function()
   {
     # - [x] start global analysis for experiment
     exp.design <- read.design.file(path=path,pattern="design")
-    all.data <- combine.samples(path=path,files=exp.design[,2])
-    data.xy.max <- get.max.channels(all.data)
+    data.xy.max <- 
+      combine.samples(path=path,files=exp.design$File) %>%
+      get.max.channels(.)
     # - [x] analyze control files
-    control.files <- exp.design[exp.design$Type == "pos" | exp.design$Type == "neg",2]
-    control.data <- combine.samples(path=path,files=control.files)
+    control.data <- 
+      exp.design[exp.design$Type == "pos" | exp.design$Type == "neg",2] %>%
+      combine.samples(path=path,files=.)
     breakpoints <- 
       control.data %>% 
       get.ddpcr.breakpoints.v4(.)
-    control.data %<>% 
+    control.data %<>%
       define.clusters(., breakpoints)
-    col.vec <- define.color(control.data[,3], density=60)
+    col.vec <- 
+      control.data$Cluster %>% 
+      define.color(., density=60)
     # - [x] add probe data
-    all.probe.data <- add.probe.data.v2(path = probe.path, name = exp.design[1,4], date = format(Sys.time(), "%Y-%m-%d"), breakpoints = breakpoints)
+    # all.probe.data <- add.probe.data.v2(path = probe.path, name = exp.design[1,4], date = format(Sys.time(), "%Y-%m-%d"), breakpoints = breakpoints)
    
     # - [x] get text for plotting
-    droplet.count <- dropletcount.clusters(control.data$Cluster)$text
+    droplet.count <- 
+      control.data$Cluster %>%
+      dropletcount.clusters(.)
     # - [x] set file name control sample 
     control.name <- paste(strsplit(x = as.character(control.files[1]),split = "_")[[1]][1],"_Controls",sep="")
     output.file <- file.path(project.path, paste(control.name,".png",sep=""))
@@ -376,8 +382,12 @@ ddpcr.pipeline <- function()
       sample.data <- 
         read.table(file=file.path(path,sample.files[i]),header = TRUE,sep = ",") %>%
         define.clusters(., breakpoints)
-      col.vec <- define.color(sample.data[,3], density=60)
-      droplet.count <- dropletcount.clusters(sample.data$Cluster)$text
+      col.vec <- 
+        sample.data$Cluster %>% 
+        define.color(., density=60)
+      droplet.count <- 
+        sample.data$Cluster %>%
+        dropletcount.clusters(.)
       sample.name <- gsub(pattern = "_Amplitude.csv",replacement="",x=sample.files[i])
       output.file <- file.path(project.path, paste(sample.name,".png",sep=""))
       png(filename=output.file,width = 800,height = 800)
