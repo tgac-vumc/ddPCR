@@ -1,6 +1,8 @@
 input.path <- "D:\\R SCRIPTS\\ddPCR analysis" #work
+input.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis"
 folders <- c("archive","input.data","output.data","output.plot","scripts","scripts.log")
 
+library(magrittr)
 # FUNCTIONS
 get_comments = function(filename){
   is_assign = function(expr) as.character(expr) %in% c("<-", "<<-", "=", "assign")
@@ -340,26 +342,23 @@ ddpcr.pipeline <- function()
   }
   ddpcr.analysis <- function(path,probe.path)
   {
-    # - [ ] start global analysis for experiment
+    # - [x] start global analysis for experiment
     exp.design <- read.design.file(path=path,pattern="design")
-    # - [ ] get min and max 
     all.data <- combine.samples(path=path,files=exp.design[,2])
     data.xy.max <- get.max.channels(all.data)
-    # - [x] find control files
+    # - [x] analyze control files
     control.files <- exp.design[exp.design$Type == "pos" | exp.design$Type == "neg",2]
-    # - [x] combine control files
     control.data <- combine.samples(path=path,files=control.files)
-    # - [x] get breakpoint data
-    breakpoints <- get.ddpcr.breakpoints.v4(x = control.data)
+    breakpoints <- 
+      control.data %>% 
+      get.ddpcr.breakpoints.v4(.)
+    control.data %<>% 
+      define.clusters(., breakpoints)
+    col.vec <- define.color(control.data[,3], density=60)
     # - [x] add probe data
     all.probe.data <- add.probe.data.v2(path = probe.path, name = exp.design[1,4], date = format(Sys.time(), "%Y-%m-%d"), breakpoints = breakpoints)
-    # - [ ] check for probe breakpoints deviation
-    
-    # - [x] cluster define based on breakpoints - with cluster notation BioRad 
-    control.data <- define.clusters(control.data, breakpoints)
-    # - [x] colors defined  breakpoints - with cluster notation BioRad 
-    col.vec <- define.color(control.data[,3], density=60)
-    # - [x] droplet count defined by cluster notion BioRad
+   
+    # - [x] get text for plotting
     droplet.count <- dropletcount.clusters(control.data$Cluster)$text
     # - [x] set file name control sample 
     control.name <- paste(strsplit(x = as.character(control.files[1]),split = "_")[[1]][1],"_Controls",sep="")
@@ -374,14 +373,13 @@ ddpcr.pipeline <- function()
     # - [ ] analyse sample files
     for(i in 1:length(sample.files))
     {
-      sample.data <- read.table(file=file.path(path,sample.files[i]),header = TRUE,sep = ",")
-      sample.data <- define.clusters(sample.data, breakpoints)
+      sample.data <- 
+        read.table(file=file.path(path,sample.files[i]),header = TRUE,sep = ",") %>%
+        define.clusters(., breakpoints)
       col.vec <- define.color(sample.data[,3], density=60)
       droplet.count <- dropletcount.clusters(sample.data$Cluster)$text
-      
       sample.name <- gsub(pattern = "_Amplitude.csv",replacement="",x=sample.files[i])
       output.file <- file.path(project.path, paste(sample.name,".png",sep=""))
-      
       png(filename=output.file,width = 800,height = 800)
       plot.ddpcr(x=sample.data, main=sample.name, max.xy = data.xy.max, breakpoints = breakpoints)
       dev.off()
