@@ -1,5 +1,5 @@
-input.path <- "D:\\R SCRIPTS\\ddPCR analysis" #work
-#input.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis"
+input.path <- "D:\\R SCRIPTS\\ddPCR analysis" # work
+input.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis" # home
 folders <- c("archive","input.data","output.data","output.plot","scripts","scripts.log")
 
 library(dplyr)
@@ -349,13 +349,25 @@ ddpcr.pipeline <- function()
       data.frame(.) %>%
       filter(.,Cluster == cluster) %>%
       cluster.mean.sd(.)
+    return(x)
   }
-  cluster.mean.sd <- function(x){
+  cluster.mean.sd <- function(x)
+  {
     cluster <- c(mean(x[,1]), mean(x[,2]))
     cluster <- rbind(cluster,c(sd(x[,1]), sd(x[,2])))
     colnames(cluster)<- c("Ch1","Ch2")
     rownames(cluster) <- c("mean","sd")
     return(cluster)
+  }
+  mean.4sd.cutoff <- function(x)
+  { # mean of the clusters + 4 times the sd of the cluster
+    cluster.1 <- mean.cluster(x, cluster=1)
+    cluster.2 <- mean.cluster(x, cluster=2)
+    cluster.4 <- mean.cluster(x, cluster=4)
+    channel.1 <- max(cluster.1[1,1]+(cluster.1[2,1]*4),cluster.4[1,1]+(cluster.4[2,1]*4))
+    channel.2 <- max(cluster.1[1,2]+(cluster.1[2,2]*4),cluster.2[1,2]+(cluster.2[2,2]*4))
+    result <- c(Ch1=channel.1,Ch2=channel.2)
+    return(result)  
   }
   
   ddpcr.analysis <- function(path,probe.path)
