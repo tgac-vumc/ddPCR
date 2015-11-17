@@ -369,6 +369,11 @@ ddpcr.pipeline <- function()
     result <- c(Ch1=channel.1,Ch2=channel.2)
     return(result)  
   }
+  plot.cutoffs <- function(x,col="black")
+  {
+    abline(h=x[1], col=col)
+    abline(v=x[2], col=col)
+  }
   
   ddpcr.analysis <- function(path,probe.path)
   {
