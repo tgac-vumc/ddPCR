@@ -239,7 +239,7 @@ ddpcr.pipeline <- function()
     }
     return(combined.data)
   }
-  get.breakpoint <- function(x,nClusters=2)
+  get.breakpoint.kmeans <- function(x,nClusters=2)
   { # use kmeans function
     x <- as.numeric(x)
     result <- NULL
@@ -247,29 +247,14 @@ ddpcr.pipeline <- function()
     if(dim(breakpoint)[1] == 2){result <- mean(breakpoint)}
     return(result)
   }
-  get.ddpcr.breakpoints <- function(x)
-  {
-    results <- c(breakpoint.ch1 = get.breakpoint(x = x[,1]) ,breakpoint.ch2 = get.breakpoint(x = x[,2]))
-    return(results)
-  }
-  get.breakpoint.v2 <- function(x)
+  get.breakpoint.ranges <- function(x)
   { # use min/max function
     x <- as.numeric(x)
     result <- NULL
     result <-  (max(x) - min(x))/2
     return(result)
   }
-  get.ddpcr.breakpoints.v2 <- function(x)
-  { # use the min/max function 
-    results <- c(breakpoint.ch1 = get.breakpoint.v2(x = x[,1]) ,breakpoint.ch2 = get.breakpoint.v2(x = x[,2]))
-    return(results)
-  }
-  get.ddpcr.breakpoints.v3 <- function(x)
-  { # use kmeans on x & y together, and set for finding 4 clusters
-    results <- kmeans(x[,1:2], 4)
-    return(results)
-  }
-  get.breakpoint.v4 <- function(x)
+  get.breakpoint.hist <- function(x)
   { # use hist function to determine locations with no droplets (middle?)
     x <- as.numeric(x)
     hist.data <- rbind(hist(x, breaks=15, plot=FALSE)$mids, hist(x, breaks=15, plot=FALSE)$counts)
@@ -277,9 +262,26 @@ ddpcr.pipeline <- function()
     result <- mean(hist.data[1,hist.data[2,] == min(hist.data[2,])])
     return(result)
   }
-  get.ddpcr.breakpoints.v4 <- function(x)
-  { # use the hist function 
-    results <- c(breakpoint.ch1 = get.breakpoint.v4(x = x[,1]) ,breakpoint.ch2 = get.breakpoint.v4(x = x[,2]))
+  get.ddpcr.breakpoints.kmeans <- function(x)
+  { # use kmeans on x & y together, and set for finding 4 clusters
+    results <- kmeans(x[,1:2], 4)
+    return(results)
+  }
+  get.ddpcr.breakpoints <- function(x, algorithm = "hist")
+  { 
+    if(tolower(algorithm) == "hist" | tolower(algorithm) == "histogram")
+    {
+      results <- c(breakpoint.ch1 = get.breakpoint.hist(x = x[,1]) ,breakpoint.ch2 = get.breakpoint.hist(x = x[,2]))
+    }
+    if(tolower(algorithm) == "ranges")
+    {
+      results <- c(breakpoint.ch1 = get.breakpoint.ranges(x = x[,1]) ,breakpoint.ch2 = get.breakpoint.ranges(x = x[,2]))
+    }
+    if(tolower(algorithm) == "kmeans")
+    {
+      results <- c(breakpoint.ch1 = get.breakpoint.kmeans(x = x[,1]) ,breakpoint.ch2 = get.breakpoint.kmeans(x = x[,2]))
+    }
+    
     return(results)
   }
   define.clusters <- function(x, breakpoints)
@@ -356,7 +358,7 @@ ddpcr.pipeline <- function()
       combine.samples(path=path,files=.)
     breakpoints <- 
       control.data %>% 
-      get.ddpcr.breakpoints.v4(.)
+      get.ddpcr.breakpoints(., algorithm = "hist")
     control.data %<>%
       define.clusters(., breakpoints)
     col.vec <- 
