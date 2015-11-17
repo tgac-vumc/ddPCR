@@ -1,5 +1,5 @@
 input.path <- "D:\\R SCRIPTS\\ddPCR analysis" #work
-input.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis"
+#input.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis"
 folders <- c("archive","input.data","output.data","output.plot","scripts","scripts.log")
 
 library(magrittr)
@@ -331,7 +331,7 @@ ddpcr.pipeline <- function()
     col.vec <- define.color(x = x[,3],density = density)
     plot(y=x[,1],x=x[,2], cex=dotres, col=col.vec, ylab="Ch1 Amplitude",xlab="Ch2 Amplitude", pch=pch, main=main,
          xlim=c(0,xmax),ylim=c(0,ymax))
-    sub.text <- dropletcount.clusters(x=x[,3])$text
+    sub.text <- dropletcount.clusters(x=x[,3])
     mtext(side = 3,text = sub.text, cex = 0.8)
     if (length(breakpoints) != 2) {
       if(verbose == TRUE){cat("No breakpoint data has been given. Data will not be plotted.")}
@@ -340,6 +340,9 @@ ddpcr.pipeline <- function()
       abline(v=breakpoints[2], col="red") # channel 2
     }
   }
+  
+  
+  
   ddpcr.analysis <- function(path,probe.path)
   {
     # - [x] start global analysis for experiment
@@ -367,7 +370,7 @@ ddpcr.pipeline <- function()
       control.data$Cluster %>%
       dropletcount.clusters(.)
     # - [x] set file name control sample 
-    control.name <- paste(strsplit(x = as.character(control.files[1]),split = "_")[[1]][1],"_Controls",sep="")
+    control.name <- paste(strsplit(x = as.character(exp.design$File[1]),split = "_")[[1]][1],"_Controls",sep="")
     output.file <- file.path(project.path, paste(control.name,".png",sep=""))
     # - [x] create plot for control data
     png(filename=output.file,width = 800,height = 800)
