@@ -343,12 +343,26 @@ ddpcr.pipeline <- function()
       abline(v=breakpoints[2], col="red") # channel 2
     }
   }
-  mean.cluster <- function(x,cluster=1)
+  plot.cutoffs <- function(x,col="black")
   {
-    x <- control.data %>% 
-      data.frame(.) %>%
-      filter(.,Cluster == cluster) %>%
-      cluster.mean.sd(.)
+    abline(h=x[1], col=col)
+    abline(v=x[2], col=col)
+  }
+  mean.cluster <- function(x,cluster=1, zero=TRUE)
+  {
+    if(zero == TRUE)
+    {
+      x <- c(0,0);
+      x <- rbind(x,c(0,0))
+      colnames(x)<- c("Ch1","Ch2")
+      rownames(x) <- c("mean","sd")
+    } else 
+    {
+      x %<>% 
+        data.frame(.) %>%
+        filter(.,Cluster == cluster) %>%
+        cluster.mean.sd(.)
+    }
     return(x)
   }
   cluster.mean.sd <- function(x)
@@ -362,18 +376,26 @@ ddpcr.pipeline <- function()
   mean.4sd.cutoff <- function(x)
   { # mean of the clusters + 4 times the sd of the cluster
     cluster.1 <- mean.cluster(x, cluster=1)
-    cluster.2 <- mean.cluster(x, cluster=2)
-    cluster.4 <- mean.cluster(x, cluster=4)
+    if(sum(x$Cluster == 2) == 0)
+      {
+        cluster.2 <- mean.cluster(x, cluster=2, zero=TRUE)
+      } else
+      {
+        cluster.2 <- mean.cluster(x, cluster=2)
+      }
+    if(sum(x$Cluster == 4) == 0)
+    {
+      cluster.4 <- mean.cluster(x, cluster=4, zero=TRUE)
+    } else
+    {
+      cluster.4 <- mean.cluster(x, cluster=4)
+    }
     channel.1 <- max(cluster.1[1,1]+(cluster.1[2,1]*4),cluster.4[1,1]+(cluster.4[2,1]*4))
     channel.2 <- max(cluster.1[1,2]+(cluster.1[2,2]*4),cluster.2[1,2]+(cluster.2[2,2]*4))
     result <- c(Ch1=channel.1,Ch2=channel.2)
     return(result)  
   }
-  plot.cutoffs <- function(x,col="black")
-  {
-    abline(h=x[1], col=col)
-    abline(v=x[2], col=col)
-  }
+
   
   ddpcr.analysis <- function(path,probe.path)
   {
@@ -427,6 +449,7 @@ ddpcr.pipeline <- function()
       output.file <- file.path(project.path, paste(sample.name,".png",sep=""))
       png(filename=output.file,width = 800,height = 800)
       plot.ddpcr(x=sample.data, main=sample.name, max.xy = data.xy.max, breakpoints = breakpoints)
+      plot.cutoffs(mean.4sd.cutoff(sample.data))
       dev.off()
     }
   }
