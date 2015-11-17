@@ -2,6 +2,7 @@ input.path <- "D:\\R SCRIPTS\\ddPCR analysis" #work
 #input.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis"
 folders <- c("archive","input.data","output.data","output.plot","scripts","scripts.log")
 
+library(dplyr)
 library(magrittr)
 # FUNCTIONS
 get_comments = function(filename){
@@ -342,8 +343,20 @@ ddpcr.pipeline <- function()
       abline(v=breakpoints[2], col="red") # channel 2
     }
   }
-  
-  
+  mean.cluster <- function(x,cluster=1)
+  {
+    x <- control.data %>% 
+      data.frame(.) %>%
+      filter(.,Cluster == cluster) %>%
+      cluster.mean.sd(.)
+  }
+  cluster.mean.sd <- function(x){
+    cluster <- c(mean(x[,1]), mean(x[,2]))
+    cluster <- rbind(cluster,c(sd(x[,1]), sd(x[,2])))
+    colnames(cluster)<- c("Ch1","Ch2")
+    rownames(cluster) <- c("mean","sd")
+    return(cluster)
+  }
   
   ddpcr.analysis <- function(path,probe.path)
   {
@@ -404,23 +417,30 @@ ddpcr.pipeline <- function()
   create.design.file(project.path,probe = "test")
   
   ##### SET PROJECT PATH
-  probe.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/probe.data"
+  path.work <- function()
+  {
+    probe.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/probe.data"
+    
+    project.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\E746_A750del"
+    ddpcr.analysis(path = project.path)
+    project.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\L858R"
+    ddpcr.analysis(path = project.path)
+    project.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\T790M"
+    ddpcr.analysis(path = project.path)
+  }
+  path.home <- function()
+  {
+    project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/L858R"
+    ddpcr.analysis(path = project.path, probe.path = probe.path)
+    project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/E746_A750del"
+    ddpcr.analysis(path = project.path, probe.path = probe.path)
+    project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/T790M"
+    ddpcr.analysis(path = project.path, probe.path = probe.path)
+    project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/test"
+    ddpcr.analysis(path = project.path, probe.path = probe.path)
+  }
   
-  project.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\E746_A750del"
-  ddpcr.analysis(path = project.path)
-  project.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\L858R"
-  ddpcr.analysis(path = project.path)
-  project.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\T790M"
-  ddpcr.analysis(path = project.path)
-  
-  project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/L858R"
-  ddpcr.analysis(path = project.path, probe.path = probe.path)
-  project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/E746_A750del"
-  ddpcr.analysis(path = project.path, probe.path = probe.path)
-  project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/T790M"
-  ddpcr.analysis(path = project.path, probe.path = probe.path)
-  project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/test"
-  ddpcr.analysis(path = project.path, probe.path = probe.path)
+
   
   ### start CONTROL ANALYSIS for analysis
   # - [ ] change function 'add.probe.data'
