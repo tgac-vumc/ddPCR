@@ -198,7 +198,7 @@ ddpcr.pipeline <- function()
       # - [ ] add probe data to file
       # - [ ] save probe file
     }
-  }
+  } # currently not used
   add.probe.data.v2 <- function(path,name=NA,date=NA,breakpoints=c(NA,NA))
   {
     name <- tolower(name)
@@ -218,7 +218,7 @@ ddpcr.pipeline <- function()
       save(probe.data, file=probe.file)
     }
     return(probe.data)
-  }
+  } # currently not used
   read.design.file <- function(path,pattern=NULL)
   {
     design.file <- list.files(path=path,pattern=pattern)
