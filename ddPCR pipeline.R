@@ -168,6 +168,12 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
     ddpcr.analysis(path = project.path, probe.path = probe.path)
   }
   
+  
+  ### GRIDDR
+  results <-
+    control.data %>%
+    griddr(.,breaks=20) %>%
+    griddr.breakpoints(.)
 
   
   ### start CONTROL ANALYSIS for analysis
