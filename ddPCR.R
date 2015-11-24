@@ -232,34 +232,36 @@ library(magrittr)
     }
     return(x)
   }
-  cluster.mean.sd <- function(x)
+  cluster.mean.sd <- function(x, cluster = 1, stdev = 1)
   {
-    cluster <- c(mean(x[,1]), mean(x[,2]))
-    cluster <- rbind(cluster,c(sd(x[,1]), sd(x[,2])))
-    colnames(cluster)<- c("Ch1","Ch2")
-    rownames(cluster) <- c("mean","sd")
-    return(cluster)
+    x <- filter(x, Cluster == cluster)
+    results <- c(mean(x[,1]), mean(x[,2]))
+    results <- rbind(results,c((sd(x[,1])*stdev), (sd(x[,2]))*stdev))
+    colnames(results)<- c("Ch1","Ch2")
+    rownames(results) <- c("mean",paste(stdev,"_sd",sep=""))
+    return(results)
   }
-  mean.4sd.cutoff <- function(x)
-  { # mean of the clusters + 4 times the sd of the cluster
-    cluster.1 <- mean.cluster(x, cluster=1)
-    if(sum(x$Cluster == 2) == 0)
-      {
-        cluster.2 <- mean.cluster(x, cluster=2, zero=TRUE)
-      } else
-      {
-        cluster.2 <- mean.cluster(x, cluster=2)
-      }
-    if(sum(x$Cluster == 4) == 0)
+  cluster.range.stdev <- function(x, cluster = 1, stdev = 3)
+  { 
+    if(cluster == 1)
     {
-      cluster.4 <- mean.cluster(x, cluster=4, zero=TRUE)
-    } else
+      result <- colSums(cluster.mean.sd(control.data,cluster = 1,stdev = stdev))
+    } else if(cluster == 2)
     {
-      cluster.4 <- mean.cluster(x, cluster=4)
+      result <- cluster.mean.sd(control.data,cluster = 2,stdev = stdev)
+      result <- c(Ch1=(result[1,1]-result[2,1]),Ch2=(result[1,2]+result[2,2]))
+    } else if(cluster == 3)
+    {
+      result <- cluster.mean.sd(control.data,cluster = 3,stdev = stdev)
+      result <- c(Ch1=(result[1,1]-result[2,1]),Ch2=(result[1,2]-result[2,2]))
+    } else if(cluster == 4)
+    {
+      result <- cluster.mean.sd(control.data,cluster = 4,stdev = stdev)
+      result <- c(Ch1=(result[1,1]+result[2,1]),Ch2=(result[1,2]-result[2,2]))
+    } else 
+    {
+      stop("Not the right type of cluster was selected.\n")
     }
-    channel.1 <- max(cluster.1[1,1]+(cluster.1[2,1]*4),cluster.4[1,1]+(cluster.4[2,1]*4))
-    channel.2 <- max(cluster.1[1,2]+(cluster.1[2,2]*4),cluster.2[1,2]+(cluster.2[2,2]*4))
-    result <- c(Ch1=channel.1,Ch2=channel.2)
-    return(result)  
   }
-# end, HF van Essen 2015
+  
+  # end, HF van Essen 2015
