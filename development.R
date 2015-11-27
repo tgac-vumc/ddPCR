@@ -21,7 +21,3 @@ get.wells <- function(prefix=NULL,letters=8, numbers=12,suffix=NULL)
   }
   return(result)
 }
-
-
-      
-      
