@@ -1,81 +1,18 @@
 input.path <- "D:\\R SCRIPTS\\ddPCR analysis" # work
 #input.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis" # home
 folders <- c("archive","input.data","output.data","output.plot","scripts","scripts.log")
+
 # FUNCTIONS
-get_comments = function(filename){
-  is_assign = function(expr) as.character(expr) %in% c("<-", "<<-", "=", "assign")
-  is_function = function(expr) is.call(expr) && is_assign(expr[[1L]]) && is.call(expr[[3L]]) && expr[[3L]][[1L]] == quote(`function`)
-  src = parse(filename, keep.source = TRUE)
-  functions = Filter(is_function, src)
-  fun_names = as.character(lapply(functions, `[[`, 2L))
-  # - [x] extract all comments
-  r = setNames(lapply(attr(functions, "srcref"), grep, pattern = "^\\s*#", value = TRUE), fun_names)
-  # - [x] remove leading spaces and comment sign '#'
-  r = lapply(r, function(x) sub(pattern = "^\\s*#", replacement = "", x = x))
-  # - [x] keep only markdown checkboxes like " - [ ] " or " - [x] "
-  r = lapply(r, function(x) x[nchar(x) >= 7L & substr(x, 1L, 7L) %in% c(" - [ ] "," - [x] ")])
-  # - [x] return only non empty results
-  r[as.logical(sapply(r, length))]
+computer.name <- as.character(Sys.info()["nodename"]) 
+if(computer.name == "PA-PC807")
+{
+  source("C:\\Documents and Settings\\h.vanessen\\ownCloud\\R_my_functions\\_R_my_functions.R")
 }
-make_doc = function(path = "R", files, package, dest){
-  if(!missing(package)) path = system.file(path, package=package)
-  stopifnot(file.exists(path))
-  if(missing(files)) files = list.files(path, pattern = "\\.R$")
-  if(!length(files)){
-    warning(paste0("No files to process in ",path,"."))
-    return(invisible())
-  }
-  if(!all(sapply(file.path(path, files), file.exists))) stop(paste0("Processing stopped as some files not exists: ", paste(files[!sapply(file.path(path, files), file.exists)], collapse=", "),"."))
-  r = setNames(lapply(file.path(path, files), get_comments), files)
-  r = r[as.logical(sapply(r, length))]
-  if(missing(dest)) return(r)
-  if(!file.exists(dirname(dest))) dir.create(dirname(dest), recursive=TRUE)
-  if(file.exists(dest)) file.rename(dest, paste0(dest,"_backup"))
-  invisible(lapply(names(r), function(filename){
-    cat(c("",paste("###", filename)), sep = "\n", file = dest, append = file.exists(dest))
-    lapply(names(r[[filename]]), function(funname){
-      cat(c("",paste("####", funname),""), sep = "\n", file = dest, append = TRUE)
-      cat(r[[filename]][[funname]], sep = "\n", file = dest, append = TRUE)
-    })
-  }))
-  if(file.exists(paste0(dest,"_backup"))) file.remove(paste0(dest,"_backup"))
-  invisible(dest)
+if(computer.name == "iMAC")
+{ 
+  source("/ownCloud/R_my_functions/_R_my_functions.R")
 }
-create.folders <- function(path,folders){
-  if(!file.exists(path))
-  {
-    stop ("Input folder does not exist. \n")
-  }else
-  {
-    for(i in 1:length(folders))
-    {
-      if(!file.exists(file.path(path,as.character(folders[i]))))
-      {
-        dir.create(file.path(path,as.character(folders[i])))
-      }
-    }
-  }
-}
-set.paths <- function(path="", folders){
-  if(path == "" | class(path) == "numeric"){ stop
-  } else {
-    folders <- c("original",folders)
-    paths <- NULL
-    for(i in 1:length(folders))
-    {
-      if(i == 1)
-      {
-        paths <- list(file.path(path))
-      }
-      if(i > 1)
-      {
-        paths <- c(paths,file.path(path,as.character(folders[i])))
-      }
-    }
-    names(paths) <- as.character(folders)
-    return(paths)
-  }
-}
+
 # RUN FUNCTIONS
 create.folders(path=input.path,folders=folders)
 path <- set.paths(path=input.path, folders=folders)
@@ -88,7 +25,7 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
   create.design.file(project.path,probe = "test")
   
 # - [ ] PIPELINE SETUP
-  ddpcr.analysis <- function(path,project.path)
+  ddpcr.analysis <- function(path)
   {
     # - [x] start global analysis for experiment
     exp.design <- read.design.file(path=path,pattern="design")
@@ -104,16 +41,6 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
       get.ddpcr.breakpoints(., algorithm = "hist")
     control.data %<>%
       define.clusters(., breakpoints)
-    col.vec <- 
-      control.data$Cluster %>% 
-      define.color(., density=60)
-    # - [x] add probe data
-    # all.probe.data <- add.probe.data.v2(path = probe.path, name = exp.design[1,4], date = format(Sys.time(), "%Y-%m-%d"), breakpoints = breakpoints)
-   
-    # - [x] get text for plotting
-    droplet.count <- 
-      control.data$Cluster %>%
-      dropletcount.clusters(.)
     # - [x] set file name control sample 
     control.name <- paste(strsplit(x = as.character(exp.design$File[1]),split = "_")[[1]][1],"_Controls",sep="")
     output.file <- file.path(project.path, paste(control.name,".png",sep=""))
@@ -124,25 +51,25 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
     
     # - [x] retrieve sample files (all files)
     sample.files <- exp.design[,2]
+    results <- NULL
+    
     # - [ ] analyse sample files
     for(i in 1:length(sample.files))
     {
       sample.data <- 
         read.table(file=file.path(path,sample.files[i]),header = TRUE,sep = ",") %>%
         define.clusters(., breakpoints)
-      col.vec <- 
-        sample.data$Cluster %>% 
-        define.color(., density=60)
-      droplet.count <- 
-        sample.data$Cluster %>%
-        dropletcount.clusters(.)
       sample.name <- gsub(pattern = "_Amplitude.csv",replacement="",x=sample.files[i])
       output.file <- file.path(project.path, paste(sample.name,".png",sep=""))
       png(filename=output.file,width = 800,height = 800)
       plot.ddpcr(x=sample.data, main=sample.name, max.xy = data.xy.max, breakpoints = breakpoints)
-      #plot.cutoffs(mean.4sd.cutoff(sample.data))
       dev.off()
+      # - [ ] sample names is not correct
+      results <- rbind(results, get.statistics(x = sample.data,sample = exp.design[i,1],input.file = exp.design[i,2],target = exp.design[i,4],breakpoints = breakpoints))
     }
+    output.file <- file.path(path,paste("ddPCR_results_" ,basename(path),".txt",sep=""))
+    write.table(x = results,file = output.file,quote = FALSE,sep = "\t",row.names = FALSE)
+    return(results)
   }
   
   ##### SET PROJECT PATH
@@ -159,7 +86,7 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
   path.home <- function()
   {
     project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/L858R"
-    ddpcr.analysis(path = project.path, probe.path = probe.path)
+    ddpcr.analysis(path = project.path)
     project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/E746_A750del"
     ddpcr.analysis(path = project.path, probe.path = probe.path)
     project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/T790M"
@@ -168,38 +95,15 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
     ddpcr.analysis(path = project.path, probe.path = probe.path)
   }
   
-  
+  new.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\20151125_858"
+  ddpcr.analysis(path = new.path)
   new.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\20151125_790"
-  ddpcr.analysis(path = new.path, project.path=new.path)
+  ddpcr.analysis(path = new.path)
   new.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\20151125_746_del"
-  ddpcr.analysis(path = new.path, project.path=new.path)
-  
- get.statistics <- function(){
-   new.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\20151125_858"
-   exp.design <- read.design.file(path=new.path,pattern="design")
-   sample.files <- exp.design[,2]
-   # - [ ] analyse sample files
-   
-  i = 1 # sample selection
-  breakpoints <- c(2139,953)
-     sample.data <- 
-       read.table(file=file.path(new.path,sample.files[i]),header = TRUE,sep = ",") %>%
-       define.clusters(., breakpoints)
-  
-  cluster.1 <- sum(sample.data[,3] %in% 1)
-  cluster.2 <- sum(sample.data[,3] %in% 2)
-  cluster.3 <- sum(sample.data[,3] %in% 3)
-  cluster.4 <- sum(sample.data[,3] %in% 4)
-  pos.ch1 <- sum(cluster.2, cluster.3)
-  pos.ch2 <- sum(cluster.4, cluster.3)
-  total.count <- sum(cluster.1, cluster.2, cluster.3, cluster.4)
-  
-  result <- concentration(negCount = (total.count-pos.ch1),Count = total.count) # channel 1
- c(result, (result + (moments(c(pos.ch1,total.count))[3]*1)))
-  
-  result <- concentration(negCount = (total.count-pos.ch2),Count = total.count) # channel 2
-  c(result, (result + (moments(c(pos.ch2,total.count))[3]*1)))
-   }
+  ddpcr.analysis(path = new.path)
+
+
+
  
 
  

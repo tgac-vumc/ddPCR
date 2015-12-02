@@ -193,6 +193,7 @@ library(dpcR)
   get.mean <- function(x,cluster=1,channel=1)
   {
       result <- mean(x[x$Cluster %in% cluster,channel])
+      if(as.character(result) == "NaN"){result <- 0}
       return(result)
   }
   get.max.channels <- function(x)
@@ -212,7 +213,7 @@ library(dpcR)
     col.vec <- define.color(x = x[,3],density = density)
     plot(y=x[,1],x=x[,2], cex=dotres, col=col.vec, ylab="Ch1 Amplitude",xlab="Ch2 Amplitude", pch=pch, main=main,
          xlim=c(0,xmax),ylim=c(0,ymax))
-    sub.text <- dropletcount.clusters(x=x[,3])
+    sub.text <- dropletcount.text(x=x[,3])
     mtext(side = 3,text = sub.text, cex = 0.8)
     if (length(breakpoints) != 2) {
       if(verbose == TRUE){cat("No breakpoint data has been given. Data will not be plotted.")}
@@ -332,12 +333,12 @@ library(dpcR)
     results[1,5] <- round(concentration(as.numeric(results[1,8]),Count = as.numeric(results[1,13])), digits = 1)
     results[2,5] <- round(concentration(as.numeric(results[2,8]),Count = as.numeric(results[2,13])), digits = 1)
     results[1:2,6] <- as.numeric(results[1:2,5])*20
-    results[1,15] <- round(get.mean(sample.data,cluster=c(2,3),1), digits = 2)
-    results[2,15] <- round(get.mean(sample.data,cluster=c(4,3),2), digits = 2)
-    results[1,16] <- round(get.mean(sample.data,cluster=c(1,4),1), digits = 2)
-    results[2,16] <- round(get.mean(sample.data,cluster=c(1,2),2), digits = 2)
-    results[1,17] <- round(get.mean(sample.data,cluster=c(1,2,3,4),1), digits = 2)
-    results[2,17] <- round(get.mean(sample.data,cluster=c(1,2,3,4),2), digits = 2)
+    results[1,15] <- round(get.mean(x,cluster=c(2,3),1), digits = 2)
+    results[2,15] <- round(get.mean(x,cluster=c(4,3),2), digits = 2)
+    results[1,16] <- round(get.mean(x,cluster=c(1,4),1), digits = 2)
+    results[2,16] <- round(get.mean(x,cluster=c(1,2),2), digits = 2)
+    results[1,17] <- round(get.mean(x,cluster=c(1,2,3,4),1), digits = 2)
+    results[2,17] <- round(get.mean(x,cluster=c(1,2,3,4),2), digits = 2)
     return(results)
   }
   
