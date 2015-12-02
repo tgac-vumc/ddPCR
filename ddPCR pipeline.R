@@ -88,7 +88,7 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
   create.design.file(project.path,probe = "test")
   
 # - [ ] PIPELINE SETUP
-  ddpcr.analysis <- function(path,probe.path)
+  ddpcr.analysis <- function(path,project.path)
   {
     # - [x] start global analysis for experiment
     exp.design <- read.design.file(path=path,pattern="design")
@@ -140,7 +140,7 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
       output.file <- file.path(project.path, paste(sample.name,".png",sep=""))
       png(filename=output.file,width = 800,height = 800)
       plot.ddpcr(x=sample.data, main=sample.name, max.xy = data.xy.max, breakpoints = breakpoints)
-      plot.cutoffs(mean.4sd.cutoff(sample.data))
+      #plot.cutoffs(mean.4sd.cutoff(sample.data))
       dev.off()
     }
   }
@@ -169,11 +169,41 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
   }
   
   
-  ### GRIDDR
-  results <-
-    control.data %>%
-    griddr(.,breaks=20) %>%
-    griddr.breakpoints(.)
+  new.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\20151125_790"
+  ddpcr.analysis(path = new.path, project.path=new.path)
+  new.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\20151125_746_del"
+  ddpcr.analysis(path = new.path, project.path=new.path)
+  
+ get.statistics <- function(){
+   new.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\20151125_858"
+   exp.design <- read.design.file(path=new.path,pattern="design")
+   sample.files <- exp.design[,2]
+   # - [ ] analyse sample files
+   
+  i = 1 # sample selection
+  breakpoints <- c(2139,953)
+     sample.data <- 
+       read.table(file=file.path(new.path,sample.files[i]),header = TRUE,sep = ",") %>%
+       define.clusters(., breakpoints)
+  
+  cluster.1 <- sum(sample.data[,3] %in% 1)
+  cluster.2 <- sum(sample.data[,3] %in% 2)
+  cluster.3 <- sum(sample.data[,3] %in% 3)
+  cluster.4 <- sum(sample.data[,3] %in% 4)
+  pos.ch1 <- sum(cluster.2, cluster.3)
+  pos.ch2 <- sum(cluster.4, cluster.3)
+  total.count <- sum(cluster.1, cluster.2, cluster.3, cluster.4)
+  
+  result <- concentration(negCount = (total.count-pos.ch1),Count = total.count) # channel 1
+ c(result, (result + (moments(c(pos.ch1,total.count))[3]*1)))
+  
+  result <- concentration(negCount = (total.count-pos.ch2),Count = total.count) # channel 2
+  c(result, (result + (moments(c(pos.ch2,total.count))[3]*1)))
+   }
+ 
+
+ 
+ 
 
   
   ### start CONTROL ANALYSIS for analysis

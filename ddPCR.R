@@ -1,5 +1,6 @@
 library(dplyr)
 library(magrittr)
+library(dpcR)
 # FUNCTIONS
   mgsub <- function(pattern, replacement, x, ...) 
   {
@@ -174,7 +175,7 @@ library(magrittr)
     
     return(x)
   }
-  dropletcount.clusters <- function(x)
+  dropletcount.text <- function(x)
   {
     results <- NULL
     results <- list(clusters=c(cluster.1=sum(x == 1),cluster.2=sum(x == 2),cluster.3=sum(x == 3),cluster.4=sum(x == 4)))
@@ -183,6 +184,16 @@ library(magrittr)
                              "   Ch1+Ch2+:",results$clusters[3],
                              "   Ch1-Ch2+:",results$clusters[4], sep="")
     return(results)
+  }
+  droplet.count <- function(x,cluster=1)
+  {
+    result <- sum(x$Cluster %in% cluster)
+    return(result)
+  }
+  get.mean <- function(x,cluster=1,channel=1)
+  {
+      result <- mean(x[x$Cluster %in% cluster,channel])
+      return(result)
   }
   get.max.channels <- function(x)
   {
@@ -262,6 +273,51 @@ library(magrittr)
     {
       stop("Not the right type of cluster was selected.\n")
     }
+  }
+  concentration <-  function(negCount, Count, vDroplet=0.91, volume=1)
+  { # concentration in copies / user defined volume
+    result <- ((-log(negCount/Count)/vDroplet))*1000*volume
+    return(result)
+  }
+  get.well <- function(x)
+  {
+    x <- strsplit(as.character(x), split = "_")[[1]][2]
+    
+    return(x)
+  }
+  get.statistics <- function(x,sample="",input.file="",target="",breakpoints=NULL)
+  {
+    col.names <- c("Well","Sample","TargetType","Target","Concentration","CopiesPer20ulWell","Positives",
+                   "Negatives","Ch1+Ch2+","Ch1+Ch2-","Ch1-Ch2+","Ch1-Ch2-","AcceptedDroplets","Threshold",
+                   "MeanAmplitudeofPositives","MeanAmplitudeofNegatives","MeanAmplitudeTotal")
+    results <- matrix(NA, nrow = 2, ncol = 17,dimnames = list(NULL,col.names))
+    results[1:2,1] <- get.well(input.file) 
+    results[1:2,2] <- sample
+    results[1:2,3] <- c("Ch1","Ch2")
+    results[1:2,4] <- target
+    results[1,7] <- droplet.count(x, c(2,3)) #Positives
+    results[2,7] <- droplet.count(x, c(3,4)) #Positives
+    results[1,8] <- droplet.count(x, c(1,4))# Negatives
+    results[2,8] <- droplet.count(x, c(1,2)) # Negatives
+    results[1:2,9] <- droplet.count(x, 3)
+    results[1:2,10] <- droplet.count(x, 2)
+    results[1:2,11] <- droplet.count(x, 4)
+    results[1:2,12] <- droplet.count(x, 1)
+    results[1:2,13]<- droplet.count(x, c(1,2,3,4)) #AcceptedDroplets
+    if(length(breakpoints) == 2)
+    {
+      results[1:2,14] <- breakpoints
+    }
+    results[1,5] <- round(concentration(as.numeric(results[1,8]),Count = as.numeric(results[1,13])), digits = 1)
+    results[2,5] <- round(concentration(as.numeric(results[2,8]),Count = as.numeric(results[2,13])), digits = 1)
+    results[1:2,6] <- as.numeric(results[1:2,5])*20
+    results[1,15] <- round(get.mean(sample.data,cluster=c(2,3),1), digits = 2)
+    results[2,15] <- round(get.mean(sample.data,cluster=c(4,3),2), digits = 2)
+    results[1,16] <- round(get.mean(sample.data,cluster=c(1,4),1), digits = 2)
+    results[2,16] <- round(get.mean(sample.data,cluster=c(1,2),2), digits = 2)
+    results[1,17] <- round(get.mean(sample.data,cluster=c(1,2,3,4),1), digits = 2)
+    results[2,17] <- round(get.mean(sample.data,cluster=c(1,2,3,4),2), digits = 2)
+    return(results)
   }
   
   # end, HF van Essen 2015
