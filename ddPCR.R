@@ -275,9 +275,10 @@ library(dpcR)
       stop("Not the right type of cluster was selected.\n")
     }
   }
-  concentration <-  function(negCount, Count, vDroplet=0.91, volume=1)
+  calc.copies <-  function(posCount, count, vDroplet=0.91, volume=1)
   { # concentration in copies / user defined volume
-    result <- ((-log(negCount/Count)/vDroplet))*1000*volume
+    negCount <- count-posCount
+    result <- ((-log(negCount/count)/vDroplet))*1000*volume
     return(result)
   }
   get.plate.wells <- function(prefix=NULL,suffix=NULL)
@@ -307,39 +308,84 @@ library(dpcR)
     x <- x[x %in% get.plate.wells()]
     return(x)
   }
-  get.statistics <- function(x,sample="",input.file="",target="",breakpoints=NULL)
+  get.statistics <- function(x,sample=NULL,input.file=NULL,target=NULL,breakpoints=NULL, interations=100)
   {
-    col.names <- c("Well","Sample","TargetType","Target","Concentration","CopiesPer20ulWell","Positives",
-                   "Negatives","Ch1+Ch2+","Ch1+Ch2-","Ch1-Ch2+","Ch1-Ch2-","AcceptedDroplets","Threshold",
+    col.names <- c("Well","Sample","TargetType","Target","Status","Copies","CopiesPer20ulWell","PoissonCopies","Concentration","Positives",
+                   "Negatives","Ch1+Ch2+","Ch1+Ch2-","Ch1-Ch2+","Ch1-Ch2-","AcceptedDroplets","Ratio","FractionalAbundance","Threshold",
                    "MeanAmplitudeofPositives","MeanAmplitudeofNegatives","MeanAmplitudeTotal")
-    results <- matrix(NA, nrow = 2, ncol = 17,dimnames = list(NULL,col.names))
-    results[1:2,1] <- get.well(input.file) 
-    results[1:2,2] <- sample
-    results[1:2,3] <- c("Ch1","Ch2")
-    results[1:2,4] <- target
-    results[1,7] <- droplet.count(x, c(2,3)) #Positives
-    results[2,7] <- droplet.count(x, c(3,4)) #Positives
-    results[1,8] <- droplet.count(x, c(1,4))# Negatives
-    results[2,8] <- droplet.count(x, c(1,2)) # Negatives
-    results[1:2,9] <- droplet.count(x, 3)
-    results[1:2,10] <- droplet.count(x, 2)
-    results[1:2,11] <- droplet.count(x, 4)
-    results[1:2,12] <- droplet.count(x, 1)
-    results[1:2,13]<- droplet.count(x, c(1,2,3,4)) #AcceptedDroplets
+    results <- matrix(NA, nrow = 2, ncol = length(col.names),dimnames = list(NULL,col.names))
+    if(class(input.file) != "NULL"){ results[1:2,colnames(results) == "Well"] <- get.well(input.file)}
+    if(class(sample) != "NULL"){results[1:2,colnames(results) == "Sample"] <- sample} 
+    results[1:2,colnames(results) == "TargetType"] <- c("Ch1","Ch2")
+    if(class(target) != "NULL"){ results[1:2,colnames(results) == "Target"] <- sample}
+    results[1,colnames(results) == "Positives"] <- droplet.count(x, c(2,3)) #Positives
+    results[2,colnames(results) == "Positives"] <- droplet.count(x, c(3,4)) #Positives
+    results[1,colnames(results) == "Negatives"] <- droplet.count(x, c(1,4))# Negatives
+    results[2,colnames(results) == "Negatives"] <- droplet.count(x, c(1,2)) # Negatives
+    results[1:2,colnames(results) == "Ch1+Ch2+"] <- droplet.count(x, 3)
+    results[1:2,colnames(results) == "Ch1+Ch2-"] <- droplet.count(x, 2)
+    results[1:2,colnames(results) == "Ch1-Ch2+"] <- droplet.count(x, 4)
+    results[1:2,colnames(results) == "Ch1-Ch2-"] <- droplet.count(x, 1)
+    results[1:2,colnames(results) == "AcceptedDroplets"]<- droplet.count(x, c(1,2,3,4)) #AcceptedDroplets
     if(length(breakpoints) == 2)
     {
-      results[1:2,14] <- breakpoints
+      results[1:2,colnames(results) == "Threshold"] <- breakpoints
     }
-    results[1,5] <- round(concentration(as.numeric(results[1,8]),Count = as.numeric(results[1,13])), digits = 1)
-    results[2,5] <- round(concentration(as.numeric(results[2,8]),Count = as.numeric(results[2,13])), digits = 1)
-    results[1:2,6] <- as.numeric(results[1:2,5])*20
-    results[1,15] <- round(get.mean(x,cluster=c(2,3),1), digits = 2)
-    results[2,15] <- round(get.mean(x,cluster=c(4,3),2), digits = 2)
-    results[1,16] <- round(get.mean(x,cluster=c(1,4),1), digits = 2)
-    results[2,16] <- round(get.mean(x,cluster=c(1,2),2), digits = 2)
-    results[1,17] <- round(get.mean(x,cluster=c(1,2,3,4),1), digits = 2)
-    results[2,17] <- round(get.mean(x,cluster=c(1,2,3,4),2), digits = 2)
+    results[1,colnames(results) == "Copies"] <- round(calc.copies(posCount = as.numeric(results[1,colnames(results) == "Positives"]),count = as.numeric(results[1,colnames(results) == "AcceptedDroplets"])), digits = 1)
+    results[2,colnames(results) == "Copies"] <- round(calc.copies(posCount = as.numeric(results[2,colnames(results) == "Positives"]),count = as.numeric(results[2,colnames(results) == "AcceptedDroplets"])), digits = 1)
+    results[1,colnames(results) == "PoissonCopies"] <- round(calc.copies(posCount = poisson.correction(count = as.numeric(results[1,colnames(results) == "AcceptedDroplets"]),
+                                                                                                                posCount = as.numeric(results[1,colnames(results) == "Positives"]), iterations = interations),
+                                                                                                                count = as.numeric(results[1,colnames(results) == "AcceptedDroplets"])), digits = 1)
+    results[2,colnames(results) == "PoissonCopies"] <- round(calc.copies(posCount = poisson.correction(count = as.numeric(results[2,colnames(results) == "AcceptedDroplets"]),
+                                                                                                                posCount = as.numeric(results[2,colnames(results) == "Positives"]), iterations = interations),
+                                                                                                                count = as.numeric(results[2,colnames(results) == "AcceptedDroplets"])), digits = 1)
+    results[1:2,colnames(results) == "CopiesPer20ulWell"] <- as.numeric(results[1:2,colnames(results) == "Concentration"])*20
+    results[1:2,colnames(results) == "Concentration"] <- as.numeric(results[1:2,colnames(results) == "Copies"])*15.152
+    results[1:2,colnames(results) == "Ratio"] <- as.numeric(results[1,colnames(results) == "Concentration"]) / as.numeric(results[2,colnames(results) == "Concentration"])
+    results[2,colnames(results) == "Ratio"] <- as.numeric(results[2,colnames(results) == "Concentration"]) / as.numeric(results[1,colnames(results) == "Concentration"])
+    results[1,colnames(results) == "FractionalAbundance"] <- as.numeric(results[1,colnames(results) == "Concentration"]) / (as.numeric(results[1,colnames(results) == "Concentration"])+as.numeric(results[2,colnames(results) == "Concentration"]))*100
+    results[2,colnames(results) == "FractionalAbundance"] <- as.numeric(results[2,colnames(results) == "Concentration"]) / (as.numeric(results[1,colnames(results) == "Concentration"])+as.numeric(results[2,colnames(results) == "Concentration"]))*100
+    results[1,colnames(results) == "MeanAmplitudeofPositives"] <- round(get.mean(x,cluster=c(2,3),1), digits = 2)
+    results[2,colnames(results) == "MeanAmplitudeofPositives"] <- round(get.mean(x,cluster=c(4,3),2), digits = 2)
+    results[1,colnames(results) == "MeanAmplitudeofNegatives"] <- round(get.mean(x,cluster=c(1,4),1), digits = 2)
+    results[2,colnames(results) == "MeanAmplitudeofNegatives"] <- round(get.mean(x,cluster=c(1,2),2), digits = 2)
+    results[1,colnames(results) == "MeanAmplitudeTotal"] <- round(get.mean(x,cluster=c(1,2,3,4),1), digits = 2)
+    results[2,colnames(results) == "MeanAmplitudeTotal"] <- round(get.mean(x,cluster=c(1,2,3,4),2), digits = 2)
     return(results)
+  }
+  poisson.correction <- function(posCount, count, iterations=100)
+  {
+    if(posCount == 0)
+    {
+      return(0)
+    } else 
+      {
+        additional.droplets <- rep(NA,iterations)
+        for(i in 1:iterations)
+        {
+          result <- rep(NA,count)
+          droplets <- 1:count
+          result[1:posCount] <- sample(x = droplets,size = posCount,replace = TRUE)
+          counter <- posCount+1
+          for(z in (posCount+1):count)
+          {
+            if((length(unique(result))-1) >= posCount)
+            {
+              break
+            }
+            result[z] <- sample(x = droplets,size = 1,replace = TRUE)
+            z <- z+1
+          }
+          additional.droplets[i] <- z-posCount
+        }
+        additional.droplets <- mean(c((posCount+min(additional.droplets)),posCount+max(additional.droplets)))
+        return(additional.droplets)
+      }
+  }
+  convert.copies.to.ng <- function(x)
+  {
+    x <- x / 15.152
+    return(x)
   }
   
   # end, HF van Essen 2015

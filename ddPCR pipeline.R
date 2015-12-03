@@ -22,7 +22,7 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
 
   source(file.path(path$scripts,"ddPCR.R"))
 # - [ ] create project design
-  create.design.file(project.path,probe = "test")
+  create.design.file(new.path,probe = "T790M")
   
 # - [ ] PIPELINE SETUP
   ddpcr.analysis <- function(path)
@@ -43,7 +43,7 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
       define.clusters(., breakpoints)
     # - [x] set file name control sample 
     control.name <- paste(strsplit(x = as.character(exp.design$File[1]),split = "_")[[1]][1],"_Controls",sep="")
-    output.file <- file.path(project.path, paste(control.name,".png",sep=""))
+    output.file <- file.path(path, paste(control.name,".png",sep=""))
     # - [x] create plot for control data
     png(filename=output.file,width = 800,height = 800)
     plot.ddpcr(x=control.data, main=control.name, max.xy=data.xy.max, breakpoints=breakpoints)
@@ -60,7 +60,7 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
         read.table(file=file.path(path,sample.files[i]),header = TRUE,sep = ",") %>%
         define.clusters(., breakpoints)
       sample.name <- gsub(pattern = "_Amplitude.csv",replacement="",x=sample.files[i])
-      output.file <- file.path(project.path, paste(sample.name,".png",sep=""))
+      output.file <- file.path(path, paste(sample.name,".png",sep=""))
       png(filename=output.file,width = 800,height = 800)
       plot.ddpcr(x=sample.data, main=sample.name, max.xy = data.xy.max, breakpoints = breakpoints)
       dev.off()
@@ -95,12 +95,11 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
     ddpcr.analysis(path = project.path, probe.path = probe.path)
   }
   
-  new.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\20151125_858"
+  new.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\spike-in L858R"
   ddpcr.analysis(path = new.path)
-  new.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\20151125_790"
+  new.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\spike-in T790M"
   ddpcr.analysis(path = new.path)
-  new.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\20151125_746_del"
-  ddpcr.analysis(path = new.path)
+
 
 
 
