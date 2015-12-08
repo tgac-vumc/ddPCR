@@ -310,7 +310,7 @@ library(dpcR)
   }
   get.statistics <- function(x,sample=NULL,input.file=NULL,target=NULL,breakpoints=NULL, interations=100)
   {
-    col.names <- c("Well","Sample","TargetType","Target","Status","Copies","CopiesPer20ulWell","PoissonCopies","Concentration","Positives",
+    col.names <- c("Well","Sample","TargetType","Target","Status","CopiesPer1ul","CopiesPer20ulWell","PoissonCopiesPer1ul","ConcentrationPer1ul","Positives",
                    "Negatives","Ch1+Ch2+","Ch1+Ch2-","Ch1-Ch2+","Ch1-Ch2-","AcceptedDroplets","Ratio","FractionalAbundance","Threshold",
                    "MeanAmplitudeofPositives","MeanAmplitudeofNegatives","MeanAmplitudeTotal")
     results <- matrix(NA, nrow = 2, ncol = length(col.names),dimnames = list(NULL,col.names))
@@ -331,26 +331,30 @@ library(dpcR)
     {
       results[1:2,colnames(results) == "Threshold"] <- breakpoints
     }
-    results[1,colnames(results) == "Copies"] <- round(calc.copies(posCount = as.numeric(results[1,colnames(results) == "Positives"]),count = as.numeric(results[1,colnames(results) == "AcceptedDroplets"])), digits = 1)
-    results[2,colnames(results) == "Copies"] <- round(calc.copies(posCount = as.numeric(results[2,colnames(results) == "Positives"]),count = as.numeric(results[2,colnames(results) == "AcceptedDroplets"])), digits = 1)
-    results[1,colnames(results) == "PoissonCopies"] <- round(calc.copies(posCount = poisson.correction(count = as.numeric(results[1,colnames(results) == "AcceptedDroplets"]),
+    results[1,colnames(results) == "CopiesPer1ul"] <- round(calc.copies(posCount = as.numeric(results[1,colnames(results) == "Positives"]),count = as.numeric(results[1,colnames(results) == "AcceptedDroplets"])), digits = 1)
+    results[2,colnames(results) == "CopiesPer1ul"] <- round(calc.copies(posCount = as.numeric(results[2,colnames(results) == "Positives"]),count = as.numeric(results[2,colnames(results) == "AcceptedDroplets"])), digits = 1)
+    results[1,colnames(results) == "PoissonCopiesPer1ul"] <- round(calc.copies(posCount = poisson.correction(count = as.numeric(results[1,colnames(results) == "AcceptedDroplets"]),
                                                                                                                 posCount = as.numeric(results[1,colnames(results) == "Positives"]), iterations = interations),
                                                                                                                 count = as.numeric(results[1,colnames(results) == "AcceptedDroplets"])), digits = 1)
-    results[2,colnames(results) == "PoissonCopies"] <- round(calc.copies(posCount = poisson.correction(count = as.numeric(results[2,colnames(results) == "AcceptedDroplets"]),
+    results[2,colnames(results) == "PoissonCopiesPer1ul"] <- round(calc.copies(posCount = poisson.correction(count = as.numeric(results[2,colnames(results) == "AcceptedDroplets"]),
                                                                                                                 posCount = as.numeric(results[2,colnames(results) == "Positives"]), iterations = interations),
                                                                                                                 count = as.numeric(results[2,colnames(results) == "AcceptedDroplets"])), digits = 1)
-    results[1:2,colnames(results) == "CopiesPer20ulWell"] <- as.numeric(results[1:2,colnames(results) == "Concentration"])*20
-    results[1:2,colnames(results) == "Concentration"] <- as.numeric(results[1:2,colnames(results) == "Copies"])*15.152
-    results[1:2,colnames(results) == "Ratio"] <- as.numeric(results[1,colnames(results) == "Concentration"]) / as.numeric(results[2,colnames(results) == "Concentration"])
-    results[2,colnames(results) == "Ratio"] <- as.numeric(results[2,colnames(results) == "Concentration"]) / as.numeric(results[1,colnames(results) == "Concentration"])
-    results[1,colnames(results) == "FractionalAbundance"] <- as.numeric(results[1,colnames(results) == "Concentration"]) / (as.numeric(results[1,colnames(results) == "Concentration"])+as.numeric(results[2,colnames(results) == "Concentration"]))*100
-    results[2,colnames(results) == "FractionalAbundance"] <- as.numeric(results[2,colnames(results) == "Concentration"]) / (as.numeric(results[1,colnames(results) == "Concentration"])+as.numeric(results[2,colnames(results) == "Concentration"]))*100
+    results[1:2,colnames(results) == "CopiesPer20ulWell"] <- as.numeric(results[1:2,colnames(results) == "CopiesPer1ul"])*20
+    results[1:2,colnames(results) == "ConcentrationPer1ul"] <- as.numeric(results[1:2,colnames(results) == "CopiesPer1ul"])/15.152
+    results[1:2,colnames(results) == "Ratio"] <- as.numeric(results[1,colnames(results) == "CopiesPer1ul"]) / as.numeric(results[2,colnames(results) == "CopiesPer1ul"])
+    results[2,colnames(results) == "Ratio"] <- as.numeric(results[2,colnames(results) == "CopiesPer1ul"]) / as.numeric(results[1,colnames(results) == "CopiesPer1ul"])
+    results[1,colnames(results) == "FractionalAbundance"] <- as.numeric(results[1,colnames(results) == "CopiesPer1ul"]) / (as.numeric(results[1,colnames(results) == "CopiesPer1ul"])+as.numeric(results[2,colnames(results) == "CopiesPer1ul"]))*100
+    results[2,colnames(results) == "FractionalAbundance"] <- as.numeric(results[2,colnames(results) == "CopiesPer1ul"]) / (as.numeric(results[1,colnames(results) == "CopiesPer1ul"])+as.numeric(results[2,colnames(results) == "CopiesPer1ul"]))*100
     results[1,colnames(results) == "MeanAmplitudeofPositives"] <- round(get.mean(x,cluster=c(2,3),1), digits = 2)
     results[2,colnames(results) == "MeanAmplitudeofPositives"] <- round(get.mean(x,cluster=c(4,3),2), digits = 2)
     results[1,colnames(results) == "MeanAmplitudeofNegatives"] <- round(get.mean(x,cluster=c(1,4),1), digits = 2)
     results[2,colnames(results) == "MeanAmplitudeofNegatives"] <- round(get.mean(x,cluster=c(1,2),2), digits = 2)
     results[1,colnames(results) == "MeanAmplitudeTotal"] <- round(get.mean(x,cluster=c(1,2,3,4),1), digits = 2)
     results[2,colnames(results) == "MeanAmplitudeTotal"] <- round(get.mean(x,cluster=c(1,2,3,4),2), digits = 2)
+    results[1:2,colnames(results) == "Status"] <- "OK"
+    if(as.numeric(results[1:2,colnames(results) == "AcceptedDroplets"]) < 10000){results[1:2,colnames(results) == "Status"] <- "CHECK"}
+    if(as.numeric(results[1,colnames(results) == "CopiesPer1ul"]) < 10000){results[1:2,colnames(results) == "Status"] <- "CHECK"}
+    if(as.numeric(results[2,colnames(results) == "CopiesPer1ul"]) < 10000){results[1:2,colnames(results) == "Status"] <- "CHECK"}
     return(results)
   }
   poisson.correction <- function(posCount, count, iterations=100)
@@ -387,5 +391,9 @@ library(dpcR)
     x <- x / 15.152
     return(x)
   }
+  exactPoiCI <- function (x, conf.level=0.95) {
+  poisson.test(x, conf.level = conf.level)$conf.int[1:2]
+  }
+  
   
   # end, HF van Essen 2015
