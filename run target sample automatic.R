@@ -52,18 +52,26 @@ get.controls <- function(x, pos=c("positive","pos control"), ntc=c("te buffer","
 # if all files exist
 # sub text for labels  = Target 1 vs target 2 = ie L858R & L858R wt
 
-run.experiment <- function(path)
+get.experiments <- function(path)
 {
-  # - [ ] check if error.log file is present
-  # - [ ] get experiment name from log file
-  # - [ ] create csv file name of the summary file
-  # - [ ] open summary file
-  # - [ ] find all wells
-  # - [ ] find all targets
-    # remove wt from target name
-  # - [ ] for each target run the analysis
+  file <- list.files(path, pattern = "Error.log",full.names = TRUE)
+  file <- gsub(pattern = "Error.log", replacement = "",x = file)
+  experiment.name <- basename(file)
+  file <- paste(file,".csv", sep="")
+  if(file.exists(file) == TRUE)
+  {
+    data <-  read.table(file = file,header = TRUE, sep=",",row.names = NULL)
+  } else { break 
+    }
+  targets <- unique(gsub(pattern = " wt", replacement = "", x=data$Target))
+  grep(data$Target,pattern = targets[i])
   
-  # - [ ] ANALYSIS
-  # - [ ] get controls (positive, negative, ntc)
-  # 
+  result <- list()
+  for(i in 1:length(targets))
+  {
+      result[[i]] <- data[grep(data$Target,pattern = targets[i]),]
+  }
+  names(result) <- as.character(targets)
+  return(result)
 }
+

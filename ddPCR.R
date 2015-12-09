@@ -391,9 +391,45 @@ library(dpcR)
     x <- x / 15.152
     return(x)
   }
-  exactPoiCI <- function (x, conf.level=0.95) {
+  exactPoiCI <- function (x, conf.level=0.95) 
+  {
   poisson.test(x, conf.level = conf.level)$conf.int[1:2]
   }
-  
+  read.csv <- function(file)
+  {
+    temp <- read.table(file = file,header = FALSE,sep = "\t",fill=TRUE)
+    temp <- as.matrix(temp)
+    nr.lines <- dim(temp)[1]
+    nr.cols <- max(apply(X = temp,MARGIN = 1,FUN=countCharOccurrences))+1
+    test.matrix <- matrix("NA",ncol=nr.cols,nrow=nr.lines)
+    for (d in 1:(nr.lines)){
+      x <-  unlist(strsplit(temp[d,1],split = ","))
+      columns <- length(x)
+      test.matrix[d,1:columns] <- x[1:columns]
+    }
+    return(test.matrix)
+  }
+  get.experiments <- function(path)
+  {
+    file <- list.files(path, pattern = "Error.log",full.names = TRUE)
+    file <- gsub(pattern = "Error.log", replacement = "",x = file)
+    experiment.name <- basename(file)
+    file <- paste(file,".csv", sep="")
+    if(file.exists(file) == TRUE)
+    {
+      data <-  read.table(file = file,header = TRUE, sep=",",row.names = NULL)
+    } else { break 
+    }
+    targets <- unique(gsub(pattern = " wt", replacement = "", x=data$Target))
+    grep(data$Target,pattern = targets[i])
+    
+    result <- list()
+    for(i in 1:length(targets))
+    {
+      result[[i]] <- data[grep(data$Target,pattern = targets[i]),]
+    }
+    names(result) <- targets
+    return(result)
+  }
   
   # end, HF van Essen 2015
