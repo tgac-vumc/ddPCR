@@ -357,6 +357,60 @@ library(dpcR)
     if(as.numeric(results[2,colnames(results) == "CopiesPer1ul"]) < 10000){results[1:2,colnames(results) == "Status"] <- "CHECK"}
     return(results)
   }
+  get.statistics.droplets <- function(x)
+  {
+    col.names <- c("Positives","Negatives","Ch1+Ch2+","Ch1+Ch2-","Ch1-Ch2+","Ch1-Ch2-","AcceptedDroplets")
+    results <- matrix(0, nrow=2,ncol=length(col.names),dimnames = list(NULL,col.names))
+    results[1,colnames(results) == "Positives"] <- droplet.count(x, c(2,3)) #Positives
+    results[2,colnames(results) == "Positives"] <- droplet.count(x, c(3,4)) #Positives
+    results[1,colnames(results) == "Negatives"] <- droplet.count(x, c(1,4))# Negatives
+    results[2,colnames(results) == "Negatives"] <- droplet.count(x, c(1,2)) # Negatives
+    results[1:2,colnames(results) == "Ch1+Ch2+"] <- droplet.count(x, 3)
+    results[1:2,colnames(results) == "Ch1+Ch2-"] <- droplet.count(x, 2)
+    results[1:2,colnames(results) == "Ch1-Ch2+"] <- droplet.count(x, 4)
+    results[1:2,colnames(results) == "Ch1-Ch2-"] <- droplet.count(x, 1)
+    results[1:2,colnames(results) == "AcceptedDroplets"] <- droplet.count(x, c(1,2,3,4)) #AcceptedDroplets
+    return(results)
+  }
+  get.statistics.copies <- function(x, interations = 100)
+  { # input = amplitide data with defined clusters
+    col.names <- c("CopiesPer1ul","CopiesPer20ulWell","PoissonCopiesPer1ul")
+    results <- matrix(0, nrow = 2, ncol = length(col.names),dimnames = list(NULL,col.names))
+    channel.1 <- droplet.count(x, c(2,3)) #Positives channel 1
+    channel.2 <- droplet.count(x, c(3,4)) #Positives channel 1
+    total <- droplet.count(x, c(1,2,3,4)) #AcceptedDroplets
+    results[1,colnames(results) == "CopiesPer1ul"] <- round(calc.copies(posCount = channel.1, count = total), digits = 1)
+    results[2,colnames(results) == "CopiesPer1ul"] <- round(calc.copies(posCount = channel.2, count = total), digits = 1)
+    results[1,colnames(results) == "PoissonCopiesPer1ul"] <- round(calc.copies(posCount = poisson.correction(count = total, posCount = channel.1, iterations = interations), count = total), digits = 1)
+    results[2,colnames(results) == "PoissonCopiesPer1ul"] <- round(calc.copies(posCount = poisson.correction(count = total, posCount = channel.2, iterations = interations), count = total), digits = 1)
+    results[1:2,colnames(results) == "CopiesPer20ulWell"] <- (x[1:2,colnames(x) == "CopiesPer1ul"])*20
+    return(results)
+  }
+  get.statistics.ratio.fract <- function(x)
+  { # input = output get.statistics.copies()
+    if ("CopiesPer1ul" %in% colnames(x) == TRUE)
+    {
+      col.names <- c("Ratio","FractionalAbundance")
+      results <- matrix(0, nrow = 2, ncol = length(col.names),dimnames = list(NULL,col.names))
+      results[1:2,colnames(results) == "Ratio"] <- x[1,colnames(results) == "CopiesPer1ul"] / x[2,colnames(results) == "CopiesPer1ul"]
+      results[2,colnames(results) == "Ratio"] <- x[2,colnames(results) == "CopiesPer1ul"] / x[1,colnames(results) == "CopiesPer1ul"]
+      results[1,colnames(results) == "FractionalAbundance"] <- x[1,colnames(results) == "CopiesPer1ul"] / (x[1,colnames(results) == "CopiesPer1ul"]+x[2,colnames(results) == "CopiesPer1ul"])*100
+      results[2,colnames(results) == "FractionalAbundance"] <- x[2,colnames(results) == "CopiesPer1ul"] / (x[1,colnames(results) == "CopiesPer1ul"]+x[2,colnames(results) == "CopiesPer1ul"])*100
+      return(results)
+    }
+  }
+  get.statistics.amplitudes <- function(x)
+  {
+    col.names <- c("MeanAmplitudeofPositives","MeanAmplitudeofNegatives","MeanAmplitudeTotal")
+    results <- matrix(0, nrow = 2, ncol = length(col.names),dimnames = list(NULL,col.names))
+    results[1,colnames(results) == "MeanAmplitudeofPositives"] <- round(get.mean(x,cluster=c(2,3),1), digits = 2)
+    results[2,colnames(results) == "MeanAmplitudeofPositives"] <- round(get.mean(x,cluster=c(4,3),2), digits = 2)
+    results[1,colnames(results) == "MeanAmplitudeofNegatives"] <- round(get.mean(x,cluster=c(1,4),1), digits = 2)
+    results[2,colnames(results) == "MeanAmplitudeofNegatives"] <- round(get.mean(x,cluster=c(1,2),2), digits = 2)
+    results[1,colnames(results) == "MeanAmplitudeTotal"] <- round(get.mean(x,cluster=c(1,2,3,4),1), digits = 2)
+    results[2,colnames(results) == "MeanAmplitudeTotal"] <- round(get.mean(x,cluster=c(1,2,3,4),2), digits = 2)
+    return(results)
+  }
   poisson.correction <- function(posCount, count, iterations=100)
   {
     if(posCount == 0)
@@ -421,15 +475,30 @@ library(dpcR)
     } else { break 
     }
     targets <- unique(gsub(pattern = " wt", replacement = "", x=data$Target))
-    grep(data$Target,pattern = targets[i])
-    
     result <- list()
     for(i in 1:length(targets))
     {
       result[[i]] <- data[grep(data$Target,pattern = targets[i]),]
     }
+    targets <- gsub(pattern = " ", replacement = "_", x=targets)
     names(result) <- targets
     return(result)
   }
+  create.experiment.folders <- function(x, path=NULL)
+  {
+    if(class(test) == "list" & class(path) != "NULL")
+    {
+      paths <- file.path(path,names(test))
+      for(i in 1:length(paths))
+      {
+        if(!file.exists(paths[i]))
+        {
+          dir.create(paths[i])
+        }
+      }
+    }
+    return(paths)
+  }
   
   # end, HF van Essen 2015
+  

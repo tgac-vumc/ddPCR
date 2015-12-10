@@ -22,12 +22,6 @@ if(file.exists(file.path(input.path,csv.file)) == TRUE)
 }
 # - [ ]
 
-targets <- unique(gsub(pattern = " wt", replacement = "", x=experiment.data$Target))
-wells <- unique(experiment.data$Well)
-
-file.exists(
-file.path(input.path,paste(experiment.name,"_",wells,"_Amplitude.csv",sep=""))
-)
 
 if(toupper(target) == "L858R")
 {
@@ -38,40 +32,57 @@ if(toupper(target) == "T790M")
   control.sample <- "H1975"
 }
 
-get.controls <- function(x, pos=c("positive","pos control"), ntc=c("te buffer","water"), neg="")
-{
-  results <- rep("sample",length(x))
-  x <- tolower(x)
-    results[x %in% tolower(pos)] <- "pos"
-    results[x %in% tolower(ntc)] <- "ntc"
-    results[x %in% tolower(neg)] <- "neg"
-    return(results)
-}
+
 
 # loop for targets
 # if all files exist
 # sub text for labels  = Target 1 vs target 2 = ie L858R & L858R wt
+# - [ ] statistics: multiple small functions
 
-get.experiments <- function(path)
+get.statistics <- function(x,sample=NULL,input.file=NULL,target=NULL,breakpoints=NULL, interations=100)
 {
-  file <- list.files(path, pattern = "Error.log",full.names = TRUE)
-  file <- gsub(pattern = "Error.log", replacement = "",x = file)
-  experiment.name <- basename(file)
-  file <- paste(file,".csv", sep="")
-  if(file.exists(file) == TRUE)
-  {
-    data <-  read.table(file = file,header = TRUE, sep=",",row.names = NULL)
-  } else { break 
-    }
-  targets <- unique(gsub(pattern = " wt", replacement = "", x=data$Target))
-  grep(data$Target,pattern = targets[i])
+
+  results <- matrix(NA, nrow = 2, ncol = length(col.names),dimnames = list(NULL,col.names))
+  if(class(input.file) != "NULL"){ results[1:2,colnames(results) == "Well"] <- get.well(input.file)}
+  if(class(sample) != "NULL"){results[1:2,colnames(results) == "Sample"] <- sample} 
+  results[1:2,colnames(results) == "TargetType"] <- c("Ch1","Ch2")
+  if(class(target) != "NULL"){ results[1:2,colnames(results) == "Target"] <- sample}
   
-  result <- list()
-  for(i in 1:length(targets))
+
+  
+  if(length(breakpoints) == 2)
   {
-      result[[i]] <- data[grep(data$Target,pattern = targets[i]),]
+    results[1:2,colnames(results) == "Threshold"] <- breakpoints
   }
-  names(result) <- as.character(targets)
-  return(result)
+
+  results[1:2,colnames(results) == "ConcentrationPer1ul"] <- as.numeric(results[1:2,colnames(results) == "CopiesPer1ul"])/15.152
+  
+
+
+  
+get.statistics.quality <- function(x,y)
+{
+  col.names <- c("Status")
+  results <- matrix(NA, nrow = 2, ncol = length(col.names),dimnames = list(NULL,col.names))
+  results[1:2,colnames(results) == "Status"] <- "OK"
+  
+  channel.1 <- round(calc.copies(posCount = as.numeric(results[1,colnames(results) == "Positives"]),count = as.numeric(results[1,colnames(results) == "AcceptedDroplets"])), digits = 1)
+  channel.2 <- round(calc.copies(posCount = as.numeric(results[2,colnames(results) == "Positives"]),count = as.numeric(results[2,colnames(results) == "AcceptedDroplets"])), digits = 1)
+  
+  
+  
+  if(as.numeric(results[1:2,colnames(results) == "AcceptedDroplets"]) < 10000){results[1:2,colnames(results) == "Status"] <- "CHECK"}
+  if(as.numeric(results[1,colnames(results) == "CopiesPer1ul"]) == 0){results[1:2,colnames(results) == "Status"] <- "CHECK"}
+  if(as.numeric(results[2,colnames(results) == "CopiesPer1ul"]) == 0){results[1:2,colnames(results) == "Status"] <- "CHECK"}
+  return(results)
 }
 
+}
+
+
+
+
+
+
+  
+}
