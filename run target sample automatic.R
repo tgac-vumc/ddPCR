@@ -79,10 +79,3 @@ get.statistics.quality <- function(x,y)
 
 }
 
-
-
-
-
-
-  
-}

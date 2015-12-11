@@ -463,8 +463,8 @@ library(dpcR)
     }
     return(test.matrix)
   }
-  get.experiments <- function(path)
-  {
+  get.targets <- function(path)
+  { # will use .csv file of the experiment located in path
     file <- list.files(path, pattern = "Error.log",full.names = TRUE)
     file <- gsub(pattern = "Error.log", replacement = "",x = file)
     experiment.name <- basename(file)
@@ -484,11 +484,11 @@ library(dpcR)
     names(result) <- targets
     return(result)
   }
-  create.experiment.folders <- function(x, path=NULL)
-  {
-    if(class(test) == "list" & class(path) != "NULL")
+  create.target.folders <- function(x, path=NULL)
+  { # x = output of get.targets(). Will create output folders at specified path.
+    if(class(x) == "list" & class(path) != "NULL")
     {
-      paths <- file.path(path,names(test))
+      paths <- file.path(path,names(x))
       for(i in 1:length(paths))
       {
         if(!file.exists(paths[i]))
@@ -499,6 +499,14 @@ library(dpcR)
     }
     return(paths)
   }
-  
+  get.controls <- function(x, pos=c("positive","pos control"), ntc=c("te buffer","water"), neg="")
+  { # x = vector of sample names is input
+  results <- rep("sample",length(x))
+  x <- tolower(x)
+  results[x %in% tolower(pos)] <- "pos"
+  results[x %in% tolower(ntc)] <- "ntc"
+  results[x %in% tolower(neg)] <- "neg"
+  return(results)
+  }
   # end, HF van Essen 2015
   

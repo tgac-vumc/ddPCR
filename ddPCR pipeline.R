@@ -21,9 +21,7 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
 # END
 
   source(file.path(path$scripts,"ddPCR.R"))
-# - [ ] create project design
-  create.design.file(new.path,probe = "T790M")
-  
+
 # - [ ] PIPELINE SETUP
   ddpcr.analysis <- function(path)
   {
@@ -100,9 +98,37 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
   new.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\spike-in T790M"
   ddpcr.analysis(path = new.path)
 
+  
+  input.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\20151202 EGFR spike-in sm_2015-12-02-15-25"
+  
+  ddpcr.analysis.v2 <- function(path)
+    {
+    experiment  <- list.files(input.path, pattern = "Error.log",full.names = FALSE)
+    experiment <- gsub(pattern = "Error.log", replacement = "",x = experiment)
+    data.targets <- get.targets(path = input.path)
+    path.targets <- create.target.folders(x = data.targets, path = input.path)
+    targets <- names(data.targets)
+    
+    control.sample <- "H1975"
+    
+    for(i in 1:length(targets))
+    {
+    sample.type <- get.controls(x = data.targets[[i]]$Sample,pos = "H1975")
+    
+    filenames <- unique(data.targets[[i]]$Well)
+    filenames <- paste(experiment,"_",filenames,"_Amplitude.csv",sep="")
+    data.xy.max <- 
+      combine.samples(path=input.path,files=filenames) %>%
+      get.max.channels(.)
+    
+    # get file names
+    data.xy.max <-
+    combine.samples(path=path,files=exp.design$File) %>%
+      get.max.channels(.)
+    
+    }
 
-
-
+}
  
 
  
