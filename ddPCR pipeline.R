@@ -99,10 +99,12 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
   ddpcr.analysis(path = new.path)
 
   
+  ###################
   input.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\20151202 EGFR spike-in sm_2015-12-02-15-25"
   
   ddpcr.analysis.v2 <- function(path)
     {
+    
     experiment  <- list.files(input.path, pattern = "Error.log",full.names = FALSE)
     experiment <- gsub(pattern = "Error.log", replacement = "",x = experiment)
     data.targets <- get.targets(path = input.path)
@@ -113,10 +115,16 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
     
     for(i in 1:length(targets))
     {
-    sample.type <- get.controls(x = data.targets[[i]]$Sample,pos = "H1975")
+    sample.list  <- data.targets[[i]]
+    sample.type <- get.controls(x = sample.list$Sample,pos = "H1975") 
+      # - [ ] change get.controls to make use of ntc as negative control
+
+    file.names <- unique(sample.list$Sample)
+    file.wells <- unique(sample.list$Well)
+    files <- paste(experiment,"_",file.wells,"_Amplitude.csv",sep="")
     
-    filenames <- unique(data.targets[[i]]$Well)
-    filenames <- paste(experiment,"_",filenames,"_Amplitude.csv",sep="")
+    sum(files %in% list.files(input.path)) == length(files) # are all files available for analaysis.
+    
     data.xy.max <- 
       combine.samples(path=input.path,files=filenames) %>%
       get.max.channels(.)
