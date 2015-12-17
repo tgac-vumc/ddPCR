@@ -80,7 +80,7 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
     ddpcr.analysis(path = project.path)
     project.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\T790M"
     ddpcr.analysis(path = project.path)
-  }
+ } 
   path.home <- function()
   {
     project.path <- "/Users/dirkvanessen/Desktop/ddPCR analysis/input.data/L858R"
@@ -101,29 +101,79 @@ make_doc(path=path$scripts,dest = file.path(path$scripts.log,log.file))
   
   ###################
   input.path <- "D:\\R SCRIPTS\\ddPCR analysis\\input.data\\20151202 EGFR spike-in sm_2015-12-02-15-25"
-  
+  path <- input.path
   ddpcr.analysis.v2 <- function(path)
     {
     
-    experiment  <- list.files(input.path, pattern = "Error.log",full.names = FALSE)
+    experiment  <- list.files(path, pattern = "Error.log",full.names = FALSE)
     experiment <- gsub(pattern = "Error.log", replacement = "",x = experiment)
-    data.targets <- get.targets(path = input.path)
-    path.targets <- create.target.folders(x = data.targets, path = input.path)
+    data.targets <- get.targets(path = path)
+    # - [x] create new directory for the target
+    path.targets <- create.target.folders(x = data.targets, path = path)
     targets <- names(data.targets)
-    
     control.sample <- "H1975"
     
     for(i in 1:length(targets))
     {
-    sample.list  <- data.targets[[i]]
-    sample.type <- get.controls(x = sample.list$Sample,pos = "H1975") 
-      # - [ ] change get.controls to make use of ntc as negative control
-
-    file.names <- unique(sample.list$Sample)
-    file.wells <- unique(sample.list$Well)
-    files <- paste(experiment,"_",file.wells,"_Amplitude.csv",sep="")
+      sample.list  <- data.targets[[i]]
+      sample.type <- get.controls(x = sample.list$Sample[duplicated(sample.list$Well)],pos = "H1975") 
+      file.names <- unique(sample.list$Sample)
+      file.wells <- unique(sample.list$Well)
+      files <- paste(experiment,"_",file.wells,"_Amplitude.csv",sep="")
+      
+      if(sum(files %in% list.files(path)) == length(files))
+        {# are all files available for analysis.
+        # - [x] get max Amplitude of all the files
+        data.xy.max <- 
+          combine.samples(path=path,files=files) %>%
+          get.max.channels(.)
+        # - [x] get positive sample and determine breakpoints
+        control.data.pos  <- 
+          files[sample.type == "pos"] %>%
+          combine.samples(path=path,files=.)
+        # - [x] get positive control breakpoints
+        breakpoints <- 
+          control.data %>% 
+          get.ddpcr.breakpoints(., algorithm = "hist")
+        # - [x] set clusters positive control with breakpoints
+        control.data.pos %<>%
+          define.clusters(., breakpoints)
+        # - [x] set file name control sample 
+        control.name <- paste(file.names[sample.type == "pos"],"_pos_Control",sep="")
+        output.file <- file.path(path.targets[[i]], paste(control.name,".png",sep=""))
+        # - [x] create plot for control data
+        png(filename=output.file,width = 800,height = 800)
+        plot.ddpcr(x=control.data.pos, main=control.name, max.xy=data.xy.max, breakpoints=breakpoints)
+        dev.off()
+        # - [x] get ntc sample(s) 
+        control.data.ntc <- 
+          files[sample.type == "ntc"] %>%
+          combine.samples(path=path,files=.)
+        # - [ ] set clusters ntc control with breakpoints
+        control.data.ntc %<>%
+          define.clusters(., breakpoints)
+        # - [x] set file name NTC control sample 
+        control.name <- paste(file.names[sample.type == "ntc"],"_ntc_Control",sep="")
+        output.file <- file.path(path.targets[[i]], paste(control.name,".png",sep=""))
+        # - [x] create plot for control data
+        png(filename=output.file,width = 800,height = 800)
+        plot.ddpcr(x=control.data.ntc, main=control.name, max.xy=data.xy.max, breakpoints=breakpoints)
+        dev.off()
+        # - [ ] set results <- c()
+        
+        # - [ ] create loop for analysis of all the samples 
+          # - [ ] if ntc sample, check for positive droplets, , else check
+          # - [ ] if pos sample, check for droplets in all clusters, else check
+          # - [ ] create plot for sample 
+        
+          # - [ ] get statistics of each sample (cbind)
+            # - [ ] 
+      
+        
+        # - [ ]
+       
+        }
     
-    sum(files %in% list.files(input.path)) == length(files) # are all files available for analaysis.
     
     data.xy.max <- 
       combine.samples(path=input.path,files=filenames) %>%
