@@ -358,7 +358,7 @@ library(dpcR)
     return(results)
   }
   get.statistics.droplets <- function(x)
-  {
+  { # input = amplitide data with defined clusters
     col.names <- c("Positives","Negatives","Ch1+Ch2+","Ch1+Ch2-","Ch1-Ch2+","Ch1-Ch2-","AcceptedDroplets")
     results <- matrix(0, nrow=2,ncol=length(col.names),dimnames = list(NULL,col.names))
     results[1,colnames(results) == "Positives"] <- droplet.count(x, c(2,3)) #Positives
@@ -383,7 +383,7 @@ library(dpcR)
     results[2,colnames(results) == "CopiesPer1ul"] <- round(calc.copies(posCount = channel.2, count = total), digits = 1)
     results[1,colnames(results) == "PoissonCopiesPer1ul"] <- round(calc.copies(posCount = poisson.correction(count = total, posCount = channel.1, iterations = interations), count = total), digits = 1)
     results[2,colnames(results) == "PoissonCopiesPer1ul"] <- round(calc.copies(posCount = poisson.correction(count = total, posCount = channel.2, iterations = interations), count = total), digits = 1)
-    results[1:2,colnames(results) == "CopiesPer20ulWell"] <- (x[1:2,colnames(x) == "CopiesPer1ul"])*20
+    results[1:2,colnames(results) == "CopiesPer20ulWell"] <- (x[1:2,colnames(results) == "CopiesPer1ul"])*20
     return(results)
   }
   get.statistics.ratio.fract <- function(x)
@@ -392,10 +392,10 @@ library(dpcR)
     {
       col.names <- c("Ratio","FractionalAbundance")
       results <- matrix(0, nrow = 2, ncol = length(col.names),dimnames = list(NULL,col.names))
-      results[1:2,colnames(results) == "Ratio"] <- x[1,colnames(results) == "CopiesPer1ul"] / x[2,colnames(results) == "CopiesPer1ul"]
-      results[2,colnames(results) == "Ratio"] <- x[2,colnames(results) == "CopiesPer1ul"] / x[1,colnames(results) == "CopiesPer1ul"]
-      results[1,colnames(results) == "FractionalAbundance"] <- x[1,colnames(results) == "CopiesPer1ul"] / (x[1,colnames(results) == "CopiesPer1ul"]+x[2,colnames(results) == "CopiesPer1ul"])*100
-      results[2,colnames(results) == "FractionalAbundance"] <- x[2,colnames(results) == "CopiesPer1ul"] / (x[1,colnames(results) == "CopiesPer1ul"]+x[2,colnames(results) == "CopiesPer1ul"])*100
+      results[1:2,colnames(results) == "Ratio"] <- x[1,colnames(x) == "CopiesPer1ul"] / x[2,colnames(x) == "CopiesPer1ul"]
+      results[2,colnames(results) == "Ratio"] <- x[2,colnames(x) == "CopiesPer1ul"] / x[1,colnames(x) == "CopiesPer1ul"]
+      results[1,colnames(results) == "FractionalAbundance"] <- x[1,colnames(x) == "CopiesPer1ul"] / (x[1,colnames(x) == "CopiesPer1ul"]+x[2,colnames(x) == "CopiesPer1ul"])*100
+      results[2,colnames(results) == "FractionalAbundance"] <- x[2,colnames(x) == "CopiesPer1ul"] / (x[1,colnames(x) == "CopiesPer1ul"]+x[2,colnames(x) == "CopiesPer1ul"])*100
       return(results)
     }
   }
@@ -442,26 +442,12 @@ library(dpcR)
   }
   convert.copies.to.ng <- function(x)
   {
-    x <- x / 15.152
+    x <- as.numeric(x) / 15.152
     return(x)
   }
   exactPoiCI <- function (x, conf.level=0.95) 
   {
   poisson.test(x, conf.level = conf.level)$conf.int[1:2]
-  }
-  read.csv <- function(file)
-  {
-    temp <- read.table(file = file,header = FALSE,sep = "\t",fill=TRUE)
-    temp <- as.matrix(temp)
-    nr.lines <- dim(temp)[1]
-    nr.cols <- max(apply(X = temp,MARGIN = 1,FUN=countCharOccurrences))+1
-    test.matrix <- matrix("NA",ncol=nr.cols,nrow=nr.lines)
-    for (d in 1:(nr.lines)){
-      x <-  unlist(strsplit(temp[d,1],split = ","))
-      columns <- length(x)
-      test.matrix[d,1:columns] <- x[1:columns]
-    }
-    return(test.matrix)
   }
   get.targets <- function(path)
   { # will use .csv file of the experiment located in path
@@ -471,7 +457,12 @@ library(dpcR)
     file <- paste(file,".csv", sep="")
     if(file.exists(file) == TRUE)
     {
-      data <-  read.table(file = file,header = TRUE, sep=",",row.names = NULL)
+      data <-  read.csv(file = file,header = TRUE,sep = ",",check.names = FALSE, row.names = NULL)
+      if(colnames(data)[1] == "row.names")
+      {
+        colnames(data) <- colnames(data)[2:dim(data)[2]]
+        data <- data[,1:(dim(data)[2]-1)]
+      }
     } else { break 
     }
     targets <- unique(gsub(pattern = " wt", replacement = "", x=data$Target))
