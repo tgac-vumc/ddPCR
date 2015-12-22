@@ -2,7 +2,7 @@
 source("D:\\R SCRIPTS\\ddPCR analysis\\scripts\\ddPCR.R")
 
   ddpcr.analysis <- function(path)
-    {
+  {
     experiment  <- list.files(path, pattern = "Error.log",full.names = FALSE)
     experiment <- gsub(pattern = "Error.log", replacement = "",x = experiment)
     data.targets <- get.targets(path = path)
@@ -13,9 +13,20 @@ source("D:\\R SCRIPTS\\ddPCR analysis\\scripts\\ddPCR.R")
     # - [x] loop through all the targets
     for(i in 1:length(targets))
     {
-      if(targets[i] == "EGFR L858R"){control.sample <- "H1975"}
-      if(targets[i] == "EGFR T790M"){control.sample <- "H1975"}
-      if(targets[i] == "EGFR E746_A750"){control.sample <- "H1650"}
+      if(targets[i] == "EGFR L858R" | targets[i] == "EGFR_L858R")
+      {
+        control.sample <- "H1975"
+      } else if(targets[i] == "EGFR T790M" | targets[i] == "EGFR_T790M")
+      {
+        control.sample <- "H1975"
+      } else if(targets[i] == "EGFR E746_A750" | targets[i] == "EGFR_E746_A750" | targets[i] == "EGFR_E746_A750del")
+      {
+        control.sample <- "H1650"
+      } else 
+        {
+          cat("No control sample has been found./n")
+          break
+        }
       
       sample.list  <- data.targets[[i]]
       sample.type <- get.controls(x = sample.list$Sample[duplicated(sample.list$Well)],pos = control.sample) 
@@ -95,9 +106,9 @@ source("D:\\R SCRIPTS\\ddPCR analysis\\scripts\\ddPCR.R")
         output.file <- file.path(path.targets[[i]],paste(experiment,"_",targets[[i]], "_results.txt",sep=""))
         write.table(x = results,file = output.file,quote = FALSE,sep = "\t",row.names = FALSE)
         cat("Probe", targets[i], "has been processed.\n")
-        }
+        } else {cat("Not all files for target ",targets[[i]]," are present for processing.\n", sep="")}
     }
-  }
+   }
   
   analysis.path <- choose.dir()
   ddpcr.analysis(path=analysis.path)

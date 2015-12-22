@@ -465,7 +465,7 @@ library(dpcR)
       }
     } else { break 
     }
-    targets <- unique(gsub(pattern = " wt", replacement = "", x=data$Target))
+    targets <- unique(mgsub(pattern = c("_WT","_wt", " wt"," WT"), replacement = c("","","",""), x=data$Target))
     result <- list()
     for(i in 1:length(targets))
     {
