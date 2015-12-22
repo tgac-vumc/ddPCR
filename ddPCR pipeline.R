@@ -40,11 +40,6 @@ source("D:\\R SCRIPTS\\ddPCR analysis\\scripts\\ddPCR.R")
         # - [x] set clusters positive control with breakpoints
         control.data.pos %<>%
           define.clusters(., breakpoints)
-        # - [ ] redefine clusters 1, 2, 4 with mean & 3sd
-        cluster.mean.sd(x = control.data.pos, cluster = 1, stdev = 3)
-        cluster.mean.sd(x = control.data.pos, cluster = 2, stdev = 3)
-        cluster.mean.sd(x = control.data.pos, cluster = 4, stdev = 3)
-        
         # - [x] set file name control sample 
         control.name <- paste(file.names[sample.type == "pos"],"_pos_Control",sep="")
         output.file <- file.path(path.targets[[i]], paste(control.name,".png",sep=""))
