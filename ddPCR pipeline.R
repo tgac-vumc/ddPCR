@@ -52,7 +52,7 @@ source("D:\\R SCRIPTS\\ddPCR analysis\\scripts\\ddPCR.R")
         control.data.pos %<>%
           define.clusters(., breakpoints)
         # - [x] set file name control sample 
-        control.name <- paste(file.names[sample.type == "pos"],"_pos_Control",sep="")
+        control.name <- paste(file.names[sample.type == "pos"],"_pos_Control",sep="", collapse="")
         output.file <- file.path(path.targets[[i]], paste(control.name,".png",sep=""))
         # - [x] create plot for control data
         png(filename=output.file,width = 800,height = 800)
@@ -67,7 +67,7 @@ source("D:\\R SCRIPTS\\ddPCR analysis\\scripts\\ddPCR.R")
         control.data.ntc %<>%
           define.clusters(., breakpoints)
         # - [x] set file name NTC control sample 
-        control.name <- paste(file.names[sample.type == "ntc"],"_ntc_Control",sep="")
+        control.name <- paste(file.names[sample.type == "ntc"],"_ntc_Control",sep="",collapse="")
         output.file <- file.path(path.targets[[i]], paste(control.name,".png",sep=""))
         # - [x] create plot for control data
         png(filename=output.file,width = 800,height = 800)
@@ -100,7 +100,7 @@ source("D:\\R SCRIPTS\\ddPCR analysis\\scripts\\ddPCR.R")
           result <- data.frame(result)
           result <- cbind(result, TargetType=c("Channel 1","Channel 2"))
           result <- cbind(result, Target=rep(targets[i],2))
-          result <- cbind(result, Status=rep("Undetermined",2))
+          result <- cbind(result, Status=rep(sample.qc(x=sample.data,sample.type = sample.type[j]),2))
           result <- cbind(result, Threshold=breakpoints.2)
           result <- cbind(result, get.statistics.droplets(sample.data))
             # - [x] colnames of droplet count data is changed after data.frame conversion

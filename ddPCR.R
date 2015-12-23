@@ -516,5 +516,27 @@ library(dpcR)
   results[x %in% tolower(neg)] <- "neg"
   return(results)
   }
+  sample.qc <- function(x, sample.type="")
+  { # input = amplitide data with defined clusters
+    if(droplet.count(x = x, cluster = c(1,2,3,4)) < 10000)
+    {
+      result <- "CHECK DROPLET COUNT"
+    } else  {
+              result <- "DROPLET COUNT OK"
+            }
+    if(tolower(sample.type) == "pos")
+    {
+      if(droplet.count(x = x, cluster=1) == 0){result <- c(result,"NO DROPLETS CLUSTER 1")}
+      if(droplet.count(x = x, cluster=2) == 0){result <- c(result,"NO DROPLETS CLUSTER 2")}
+      if(droplet.count(x = x, cluster=3) == 0){result <- c(result,"NO DROPLETS CLUSTER 3")}
+      if(droplet.count(x = x, cluster=4) == 0){result <- c(result,"NO DROPLETS CLUSTER 4")}
+    }
+    if(tolower(sample.type) == "neg")
+    {
+      if(droplet.count(x = x, cluster = c(2,3,4)) > 0){result <- c(result,"FALSE POSITIVE FOUND")}
+    }
+    paste(result, sep=":", collapse="")
+    return(result)
+  }
   # end, HF van Essen 2015
   
