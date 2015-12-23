@@ -163,7 +163,7 @@ library(dpcR)
     x[,3] <- results
     return(x)
   }
-  refine.clusters.stdev <- function(x,stdev=3, breakpoints, minDroplets=10)
+  refine.clusters.stdev <- function(x,stdev=3, breakpoints)
   {
     cluster1 <- colSums(cluster.mean.sd(x, cluster = 1, stdev = stdev))
     cluster2 <- colSums(cluster.mean.sd(x, cluster = 2, stdev = stdev))
@@ -531,11 +531,11 @@ library(dpcR)
       if(droplet.count(x = x, cluster=3) == 0){result <- c(result,"NO DROPLETS CLUSTER 3")}
       if(droplet.count(x = x, cluster=4) == 0){result <- c(result,"NO DROPLETS CLUSTER 4")}
     }
-    if(tolower(sample.type) == "neg")
+    if(tolower(sample.type) == "ntc")
     {
       if(droplet.count(x = x, cluster = c(2,3,4)) > 0){result <- c(result,"FALSE POSITIVE FOUND")}
     }
-    paste(result, sep=":", collapse="")
+    result <- paste(result, collapse=": ")
     return(result)
   }
   # end, HF van Essen 2015

@@ -66,6 +66,13 @@ source("D:\\R SCRIPTS\\ddPCR analysis\\scripts\\ddPCR.R")
         # - [ ] set clusters ntc control with breakpoints
         control.data.ntc %<>%
           define.clusters(., breakpoints)
+        # - [x] redefine clusters with mean & stdev
+        breakpoints.2 <- 
+          control.data.ntc %>% 
+          refine.clusters.stdev(., stdev=3,breakpoints = breakpoints)
+        # - [x] set clusters ntc control with new breakpoints
+        control.data.ntc %<>%
+          define.clusters(., breakpoints.2)
         # - [x] set file name NTC control sample 
         control.name <- paste(file.names[sample.type == "ntc"],"_ntc_Control",sep="",collapse="")
         output.file <- file.path(path.targets[[i]], paste(control.name,".png",sep=""))
@@ -81,11 +88,11 @@ source("D:\\R SCRIPTS\\ddPCR analysis\\scripts\\ddPCR.R")
           sample.data <- 
             read.table(file=file.path(path,files[j]),header = TRUE,sep = ",") %>%
             define.clusters(., breakpoints)
-          # - [ ] redefine clusters with mean & stdev
+          # - [x] redefine clusters with mean & stdev
           breakpoints.2 <- 
             sample.data %>% 
             refine.clusters.stdev(., stdev=3,breakpoints = breakpoints)
-          # - [ ] set clusters positive control with new breakpoints
+          # - [x] set clusters sample data with new breakpoints
           sample.data %<>%
             define.clusters(., breakpoints.2)
           # - [x] create plot for sample data
