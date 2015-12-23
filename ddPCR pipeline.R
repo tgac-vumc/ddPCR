@@ -78,7 +78,7 @@ source("D:\\R SCRIPTS\\ddPCR analysis\\scripts\\ddPCR.R")
         output.file <- file.path(path.targets[[i]], paste(control.name,".png",sep=""))
         # - [x] create plot for control data
         png(filename=output.file,width = 800,height = 800)
-        plot.ddpcr(x=control.data.ntc, main=control.name, max.xy=data.xy.max, breakpoints=breakpoints)
+        plot.ddpcr(x=control.data.ntc, main=control.name, max.xy=data.xy.max, breakpoints=breakpoints.2)
         dev.off()
         # - [x] set results <- c()
         results <- c()
@@ -110,7 +110,7 @@ source("D:\\R SCRIPTS\\ddPCR analysis\\scripts\\ddPCR.R")
           result <- cbind(result, Status=rep(sample.qc(x=sample.data,sample.type = sample.type[j]),2))
           result <- cbind(result, Threshold=breakpoints.2)
           result <- cbind(result, get.statistics.droplets(sample.data))
-            # - [x] colnames of droplet count data is changed after data.frame conversion
+            # - [ ] colnames of droplet count data is changed after data.frame conversion
           copies.data <- get.statistics.copies(sample.data)
           result <- cbind(result, copies.data)
           result <- cbind(result, ngPer1ul=convert.copies.to.ng(result$CopiesPer1ul))
