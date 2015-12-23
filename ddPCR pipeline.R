@@ -47,7 +47,6 @@ source("D:\\R SCRIPTS\\ddPCR analysis\\scripts\\ddPCR.R")
         png(filename=output.file,width = 800,height = 800)
         plot.ddpcr(x=control.data.pos, main=control.name, max.xy=data.xy.max, breakpoints=breakpoints)
         dev.off()
-        
         # - [x] get ntc sample(s) 
         control.data.ntc <- 
           files[sample.type == "ntc"] %>%
@@ -70,11 +69,18 @@ source("D:\\R SCRIPTS\\ddPCR analysis\\scripts\\ddPCR.R")
           sample.data <- 
             read.table(file=file.path(path,files[j]),header = TRUE,sep = ",") %>%
             define.clusters(., breakpoints)
+          # - [ ] redefine clusters with mean & stdev
+          breakpoints.2 <- 
+            sample.data %>% 
+            refine.clusters.stdev(., stdev=3,breakpoints = breakpoints)
+          # - [ ] set clusters positive control with new breakpoints
+          sample.data %<>%
+            define.clusters(., breakpoints.2)
           # - [x] create plot for sample data
           sample.name <- gsub(pattern = "_Amplitude.csv",replacement="",x=files[j])
           output.file <- file.path(path.targets[[i]], paste(sample.name,".png",sep=""))
           png(filename=output.file,width = 800,height = 800)
-          plot.ddpcr(x=sample.data, main=file.names[j], max.xy = data.xy.max, breakpoints = breakpoints)
+          plot.ddpcr(x=sample.data, main=file.names[j], max.xy = data.xy.max, breakpoints = breakpoints.2)
           dev.off()
           
           # - [x] Add: Well, Sample, TargetType (ch1/ch2), Target, Status concentration, 
@@ -83,6 +89,7 @@ source("D:\\R SCRIPTS\\ddPCR analysis\\scripts\\ddPCR.R")
           result <- cbind(result, TargetType=c("Channel 1","Channel 2"))
           result <- cbind(result, Target=rep(targets[i],2))
           result <- cbind(result, Status=rep("Undetermined",2))
+          result <- cbind(result, Threshold=breakpoints.2)
           result <- cbind(result, get.statistics.droplets(sample.data))
             # - [x] colnames of droplet count data is changed after data.frame conversion
           copies.data <- get.statistics.copies(sample.data)

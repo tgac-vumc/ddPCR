@@ -163,6 +163,23 @@ library(dpcR)
     x[,3] <- results
     return(x)
   }
+  refine.clusters.stdev <- function(x,stdev=3, breakpoints, minDroplets=10)
+  {
+    cluster1 <- colSums(cluster.mean.sd(x, cluster = 1, stdev = stdev))
+    cluster2 <- colSums(cluster.mean.sd(x, cluster = 2, stdev = stdev))
+    cluster4 <- colSums(cluster.mean.sd(x, cluster = 4, stdev = stdev))
+    refined.channel2 <- max(c(cluster1[2], cluster2[2]), na.rm = TRUE)
+      if(refined.channel2 < breakpoints[2])
+        {
+        breakpoints[2] <- mean(c(refined.channel2,breakpoints[2]))
+        } else {cat("Breakpoint for channel 2 could not be defined further.\n")}
+    refined.channel1 <- max(c(cluster1[1], cluster4[1]), na.rm = TRUE)
+      if(refined.channel1 < breakpoints[1])
+        {
+        breakpoints[1] <- mean(c(refined.channel1,breakpoints[1]))
+      } else {cat("Breakpoint for channel 1 could not be defined further.\n")}
+    return(breakpoints)
+  }
   define.color <- function(x,density=NULL)
   {
     ddpcr.colors <- paste(c("#000000","#FF6600","#00CC00","#0033FF"), sep="")
