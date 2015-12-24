@@ -24,7 +24,7 @@ source("D:\\R SCRIPTS\\ddPCR analysis\\scripts\\ddPCR.R")
         control.sample <- "H1650"
       } else 
         {
-          cat("No control sample has been found./n")
+          cat("No control sample has been found.\n")
           break
         }
 
