@@ -110,7 +110,6 @@ source("D:\\R SCRIPTS\\ddPCR analysis\\scripts\\ddPCR.R")
           result <- cbind(result, Status=rep(sample.qc(x=sample.data,sample.type = sample.type[j]),2))
           result <- cbind(result, Threshold=breakpoints.2)
           result <- cbind(result, get.statistics.droplets(sample.data))
-            # - [ ] colnames of droplet count data is changed after data.frame conversion
           copies.data <- get.statistics.copies(sample.data)
           result <- cbind(result, copies.data)
           result <- cbind(result, ngPer1ul=convert.copies.to.ng(result$CopiesPer1ul))
