@@ -26,7 +26,7 @@ library(dpcR)
     output.file <- file.path(path,"design.txt")
     write.table(file = output.file,x = design,quote = FALSE,sep = "\t",row.names = FALSE)
   }
-  add.probe.data <- function(path,Name,Date,BreakPoint1,BreakPoint2,PosClusterAmp,NegClusterAmp,PosClusterSD,NegClusterSD,PosFDR,RainFDR)
+  add.probe.data <- function(path,Name,Date,threshold1,threshold2,PosClusterAmp,NegClusterAmp,PosClusterSD,NegClusterSD,PosFDR,RainFDR)
   {
     Name <- tolower(Name)
     probe.file <- file.path(path,paste(name,".Rdata",sep=""))
@@ -34,8 +34,8 @@ library(dpcR)
       col.names <- c("Ch1","Ch2")
       probe.data <- list( Name = Name,
                           Date = Date,
-                          BreakPoint1 = matrix(data = BreakPoint1, nrow = 1, ncol = 2,dimnames = list(NULL,col.names)),
-                          BreakPoint2 = matrix(data = BreakPoint2, nrow = 1, ncol = 2,dimnames = list(NULL,col.names)),
+                          threshold1 = matrix(data = threshold1, nrow = 1, ncol = 2,dimnames = list(NULL,col.names)),
+                          threshold2 = matrix(data = threshold2, nrow = 1, ncol = 2,dimnames = list(NULL,col.names)),
                           PosClusterAmp = matrix(data = PosClusterAmp, nrow = 1, ncol = 2,dimnames = list(NULL,col.names)),
                           NegClusterAmp = matrix(data = NegClusterAmp, nrow = 1, ncol = 2,dimnames = list(NULL,col.names)),
                           PosClusterSD = matrix(data = PosClusterSD, nrow = 1, ncol = 2,dimnames = list(NULL,col.names)),
@@ -50,8 +50,8 @@ library(dpcR)
       load(probe.file)
         probe.data$Name <- rbind(probe.data$Name,Name)
         probe.data$Date <- rbind(probe.data$Date,Date)
-        probe.data$BreakPoint1 <- rbind(probe.data$BreakPoint1,BreakPoint1)
-        probe.data$BreakPoint2 <- rbind(probe.data$BreakPoint2,BreakPoint2)
+        probe.data$threshold1 <- rbind(probe.data$threshold1,threshold1)
+        probe.data$threshold2 <- rbind(probe.data$threshold2,threshold2)
         probe.data$PosClusterAmp <- rbind(probe.data$PosClusterAmp,PosClusterAmp)
         probe.data$NegClusterAmp <- rbind(probe.data$NegClusterAmp,NegClusterAmp)
         probe.data$PosClusterSD <- rbind(probe.data$PosClusterSD,PosClusterSD)
@@ -64,7 +64,7 @@ library(dpcR)
       # - [ ] save probe file
     }
   } # currently not used
-  add.probe.data.v2 <- function(path,name=NA,date=NA,breakpoints=c(NA,NA))
+  add.probe.data.v2 <- function(path,name=NA,date=NA,thresholds=c(NA,NA))
   {
     name <- tolower(name)
     probe.file <- file.path(path,paste(name,".Rdata",sep=""))
@@ -72,14 +72,14 @@ library(dpcR)
       col.names <- c("Ch1","Ch2")
       probe.data <- list( name = name,
                           date = date,
-                          breakpoints = matrix(data = breakpoints, nrow = 1, ncol = 2,dimnames = list(NULL,col.names))
+                          thresholds = matrix(data = thresholds, nrow = 1, ncol = 2,dimnames = list(NULL,col.names))
       )
       save(probe.data, file=probe.file)
     }else{
       load(probe.file)
       probe.data$name <- rbind(probe.data$name,name)
       probe.data$date <- rbind(probe.data$date,date)
-      probe.data$breakpoints <- rbind(probe.data$breakpoints,breakpoints)
+      probe.data$thresholds <- rbind(probe.data$thresholds,thresholds)
       save(probe.data, file=probe.file)
     }
     return(probe.data)
@@ -105,80 +105,81 @@ library(dpcR)
     }
     return(combined.data)
   }
-  get.breakpoint.kmeans <- function(x,nClusters=2)
+  get.threshold.kmeans <- function(x,nClusters=2)
   {
     x <- as.numeric(x)
     result <- NULL
-    breakpoint <- kmeans(x=x,centers=nClusters)$centers
-    if(dim(breakpoint)[1] == 2){result <- mean(breakpoint)}
+    threshold <- kmeans(x=x,centers=nClusters)$centers
+    if(dim(threshold)[1] == 2){result <- mean(threshold)}
     return(result)
   }
-  get.breakpoint.ranges <- function(x)
+  get.threshold.ranges <- function(x)
   {
     x <- as.numeric(x)
     result <- NULL
     result <-  (max(x) - min(x))/2
     return(result)
   }
-  get.breakpoint.hist <- function(x)
+  get.threshold.hist <- function(x)
   {
     x <- as.numeric(x)
-    hist.data <- rbind(hist(x, breaks=15, plot=FALSE)$mids, hist(x, breaks=15, plot=FALSE)$counts)
-    hist.data <- hist.data[,-c(1:2,14:16)]
+    hist.data <- hist(x, breaks=15, plot=FALSE)
+    hist.data <- rbind(hist.data$mids,hist.data$counts)
+    hist.data <- hist.data[,-c(1:2,(dim(hist.data)[2]-2):dim(hist.data)[2])]
     result <- mean(hist.data[1,hist.data[2,] == min(hist.data[2,])])
     return(result)
   }
-  get.ddpcr.breakpoints.kmeans <- function(x)
+  get.ddpcr.threshold.kmeans <- function(x)
   {
     results <- kmeans(x[,1:2], 4)
     return(results)
   }
-  get.ddpcr.breakpoints <- function(x, algorithm = "hist")
+  get.ddpcr.thresholds <- function(x, algorithm = "hist")
   { 
     if(tolower(algorithm) == "hist" | tolower(algorithm) == "histogram")
     {
-      results <- c(breakpoint.ch1 = get.breakpoint.hist(x = x[,1]) ,breakpoint.ch2 = get.breakpoint.hist(x = x[,2]))
+      results <- c(threshold.ch1 = get.threshold.hist(x = x[,1]) ,threshold.ch2 = get.threshold.hist(x = x[,2]))
     }
     if(tolower(algorithm) == "ranges")
     {
-      results <- c(breakpoint.ch1 = get.breakpoint.ranges(x = x[,1]) ,breakpoint.ch2 = get.breakpoint.ranges(x = x[,2]))
+      results <- c(threshold.ch1 = get.threshold.ranges(x = x[,1]) ,threshold.ch2 = get.threshold.ranges(x = x[,2]))
     }
     if(tolower(algorithm) == "kmeans")
     {
-      results <- c(breakpoint.ch1 = get.breakpoint.kmeans(x = x[,1]) ,breakpoint.ch2 = get.breakpoint.kmeans(x = x[,2]))
+      results <- c(threshold.ch1 = get.threshold.kmeans(x = x[,1]) ,threshold.ch2 = get.threshold.kmeans(x = x[,2]))
     }
     
     return(results)
   }
-  define.clusters <- function(x, breakpoints)
+  define.clusters <- function(x, thresholds)
   {
-    if (length(breakpoints) != 2) {
-      stop("breakpoints must have a length of 2.\n")
+    if (length(thresholds) != 2) {
+      stop("thresholds must have a length of 2.\n")
     }
     results <- rep(NA,dim(x)[1])
-    results[x[,1] < breakpoints[1] & x[,2] < breakpoints[2]] <- 1 # ch1-ch2- : cluster 1
-    results[x[,1] > breakpoints[1] & x[,2] < breakpoints[2]] <- 2 # ch1+ch2- : cluster 2
-    results[x[,1] > breakpoints[1] & x[,2] > breakpoints[2]] <- 3 # ch1+ch2+ : cluster 3
-    results[x[,1] < breakpoints[1] & x[,2] > breakpoints[2]] <- 4 # ch1-ch2+ : cluster 4
+    results[x[,1] < thresholds[1] & x[,2] < thresholds[2]] <- 1 # ch1-ch2- : cluster 1
+    results[x[,1] > thresholds[1] & x[,2] < thresholds[2]] <- 2 # ch1+ch2- : cluster 2
+    results[x[,1] > thresholds[1] & x[,2] > thresholds[2]] <- 3 # ch1+ch2+ : cluster 3
+    results[x[,1] < thresholds[1] & x[,2] > thresholds[2]] <- 4 # ch1-ch2+ : cluster 4
     x[,3] <- results
     return(x)
   }
-  refine.clusters.stdev <- function(x,stdev=3, breakpoints, minDroplets=10)
+  refine.clusters.stdev <- function(x,stdev=3, thresholds)
   {
     cluster1 <- colSums(cluster.mean.sd(x, cluster = 1, stdev = stdev))
     cluster2 <- colSums(cluster.mean.sd(x, cluster = 2, stdev = stdev))
     cluster4 <- colSums(cluster.mean.sd(x, cluster = 4, stdev = stdev))
     refined.channel2 <- max(c(cluster1[2], cluster2[2]), na.rm = TRUE)
-      if(refined.channel2 < breakpoints[2])
+      if(refined.channel2 < thresholds[2])
         {
-        breakpoints[2] <- mean(c(refined.channel2,breakpoints[2]))
-        } else {cat("Breakpoint for channel 2 could not be defined further.\n")}
+        thresholds[2] <- mean(c(refined.channel2,thresholds[2]))
+        } else {cat("threshold for channel 2 could not be defined further.\n")}
     refined.channel1 <- max(c(cluster1[1], cluster4[1]), na.rm = TRUE)
-      if(refined.channel1 < breakpoints[1])
+      if(refined.channel1 < thresholds[1])
         {
-        breakpoints[1] <- mean(c(refined.channel1,breakpoints[1]))
-      } else {cat("Breakpoint for channel 1 could not be defined further.\n")}
-    return(breakpoints)
+        thresholds[1] <- mean(c(refined.channel1,thresholds[1]))
+      } else {cat("threshold for channel 1 could not be defined further.\n")}
+    return(thresholds)
   }
   define.color <- function(x,density=NULL)
   {
@@ -218,7 +219,7 @@ library(dpcR)
     results <- c(Ch1.max = round(max(x[,1])+100) ,Ch2.max = round(max(x[,2])+100))
     return(results)
   }
-  plot.ddpcr <- function(x,dotres=0.7,main="ddPCR",pch=16,colors="ddpcr",density=60,breakpoints=NULL,max.xy=NULL,verbose=FALSE)
+  plot.ddpcr <- function(x,dotres=0.7,main="ddPCR",pch=16,colors="ddpcr",density=60,thresholds=NULL,max.xy=NULL,verbose=FALSE)
   {
     if(length(max.xy) != 2) {
       xmax <- max(x[,2])
@@ -232,17 +233,17 @@ library(dpcR)
          xlim=c(0,xmax),ylim=c(0,ymax))
     sub.text <- dropletcount.text(x=x[,3])
     mtext(side = 3,text = sub.text, cex = 0.8)
-    if (length(breakpoints) != 2) {
-      if(verbose == TRUE){cat("No breakpoint data has been given. Data will not be plotted.")}
+    if (length(thresholds) != 2) {
+      if(verbose == TRUE){cat("No threshold data has been given. Data will not be plotted.")}
     }else{
-      abline(h=breakpoints[1], col="red") # channel 1
-      abline(v=breakpoints[2], col="red") # channel 2
+      abline(h=thresholds[1], col="red") # channel 1
+      abline(v=thresholds[2], col="red") # channel 2
     }
   }
-  plot.cutoffs <- function(x,col="black")
+  plot.thresholds <- function(thresholds,col="black")
   {
-    abline(h=x[1], col=col)
-    abline(v=x[2], col=col)
+    abline(h=thresholds[1], col=col)
+    abline(v=thresholds[2], col=col)
   }
   mean.cluster <- function(x,cluster=1, zero=TRUE)
   {
@@ -325,7 +326,7 @@ library(dpcR)
     x <- x[x %in% get.plate.wells()]
     return(x)
   }
-  get.statistics <- function(x,sample=NULL,input.file=NULL,target=NULL,breakpoints=NULL, interations=100)
+  get.statistics <- function(x,sample=NULL,input.file=NULL,target=NULL,thresholds=NULL, interations=100)
   {
     col.names <- c("Well","Sample","TargetType","Target","Status","CopiesPer1ul","CopiesPer20ulWell","PoissonCopiesPer1ul","ConcentrationPer1ul","Positives",
                    "Negatives","Ch1+Ch2+","Ch1+Ch2-","Ch1-Ch2+","Ch1-Ch2-","AcceptedDroplets","Ratio","FractionalAbundance","Threshold",
@@ -344,9 +345,9 @@ library(dpcR)
     results[1:2,colnames(results) == "Ch1-Ch2+"] <- droplet.count(x, 4)
     results[1:2,colnames(results) == "Ch1-Ch2-"] <- droplet.count(x, 1)
     results[1:2,colnames(results) == "AcceptedDroplets"]<- droplet.count(x, c(1,2,3,4)) #AcceptedDroplets
-    if(length(breakpoints) == 2)
+    if(length(thresholds) == 2)
     {
-      results[1:2,colnames(results) == "Threshold"] <- breakpoints
+      results[1:2,colnames(results) == "Threshold"] <- thresholds
     }
     results[1,colnames(results) == "CopiesPer1ul"] <- round(calc.copies(posCount = as.numeric(results[1,colnames(results) == "Positives"]),count = as.numeric(results[1,colnames(results) == "AcceptedDroplets"])), digits = 1)
     results[2,colnames(results) == "CopiesPer1ul"] <- round(calc.copies(posCount = as.numeric(results[2,colnames(results) == "Positives"]),count = as.numeric(results[2,colnames(results) == "AcceptedDroplets"])), digits = 1)
@@ -376,16 +377,16 @@ library(dpcR)
   }
   get.statistics.droplets <- function(x)
   { # input = amplitide data with defined clusters
-    col.names <- c("Positives","Negatives","Ch1+Ch2+","Ch1+Ch2-","Ch1-Ch2+","Ch1-Ch2-","AcceptedDroplets")
+    col.names <- c("Positives","Negatives","Ch1-Ch2-","Ch1+Ch2-","Ch1+Ch2+","Ch1-Ch2+","AcceptedDroplets")
     results <- matrix(0, nrow=2,ncol=length(col.names),dimnames = list(NULL,col.names))
     results[1,colnames(results) == "Positives"] <- droplet.count(x, c(2,3)) #Positives
     results[2,colnames(results) == "Positives"] <- droplet.count(x, c(3,4)) #Positives
     results[1,colnames(results) == "Negatives"] <- droplet.count(x, c(1,4))# Negatives
     results[2,colnames(results) == "Negatives"] <- droplet.count(x, c(1,2)) # Negatives
-    results[1:2,colnames(results) == "Ch1+Ch2+"] <- droplet.count(x, 3)
-    results[1:2,colnames(results) == "Ch1+Ch2-"] <- droplet.count(x, 2)
-    results[1:2,colnames(results) == "Ch1-Ch2+"] <- droplet.count(x, 4)
     results[1:2,colnames(results) == "Ch1-Ch2-"] <- droplet.count(x, 1)
+    results[1:2,colnames(results) == "Ch1+Ch2-"] <- droplet.count(x, 2)
+    results[1:2,colnames(results) == "Ch1+Ch2+"] <- droplet.count(x, 3)
+    results[1:2,colnames(results) == "Ch1-Ch2+"] <- droplet.count(x, 4)
     results[1:2,colnames(results) == "AcceptedDroplets"] <- droplet.count(x, c(1,2,3,4)) #AcceptedDroplets
     return(results)
   }
@@ -531,11 +532,11 @@ library(dpcR)
       if(droplet.count(x = x, cluster=3) == 0){result <- c(result,"NO DROPLETS CLUSTER 3")}
       if(droplet.count(x = x, cluster=4) == 0){result <- c(result,"NO DROPLETS CLUSTER 4")}
     }
-    if(tolower(sample.type) == "neg")
+    if(tolower(sample.type) == "ntc")
     {
       if(droplet.count(x = x, cluster = c(2,3,4)) > 0){result <- c(result,"FALSE POSITIVE FOUND")}
     }
-    paste(result, sep=":", collapse="")
+    result <- paste(result, collapse=": ")
     return(result)
   }
   # end, HF van Essen 2015
