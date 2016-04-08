@@ -1,8 +1,6 @@
 # README file for ddPCR
 # https://github.com/drkvnssn/ddPCR-pipeline.git
-# 201512, HFvanEssen
-
-Files needed to run an update on MiSeq output folder
+# 201601, HFvanEssen
 
 Use ddPCR QuantaSoft software to analyse the samples
 - 'Export Amplitude and Cluster Data' in options 
