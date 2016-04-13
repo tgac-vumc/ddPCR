@@ -1,5 +1,5 @@
 # README file for ddPCR
-# https://github.com/drkvnssn/ddPCR-pipeline.git
+# 
 # 201601, HFvanEssen
 
 Use ddPCR QuantaSoft software to analyse the samples
@@ -14,6 +14,3 @@ In the experiment path new folders - one for each target - will be created conta
 - ddPCR plot for positive and ntc control.
 - ddPCR plot for each sample well in the experiment.
 - experiment / target .txt file containing the results of the experiment.
-
-
-
