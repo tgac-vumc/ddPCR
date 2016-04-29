@@ -1,5 +1,9 @@
-getThresholds <- function(x, algorithm = "hist")
+getThresholds <- function(x, algorithm = "hist", rm.outliers = TRUE)
 { 
+  if(rm.outliers == TRUE)
+  {
+    x <- x[!x[,3] == 0,]
+  }
   if(tolower(algorithm) == "hist" | tolower(algorithm) == "histogram")
   {
     results <- c(threshold.ch1 = getThresholdHist(x = x[,1]), threshold.ch2 = getThresholdHist(x = x[,2]))
