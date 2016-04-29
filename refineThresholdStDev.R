@@ -1,6 +1,6 @@
 refineThresholdStDev <- function(x, stdev=3, thresholds)
 {
-  cluster1 <- colSums(calculaeMeanSdCluster(x, cluster = 1, stdev = stdev))
+  cluster1 <- colSums(calculateMeanSdCluster(x, cluster = 1, stdev = stdev))
   cluster2 <- colSums(calculateMeanSdCluster(x, cluster = 2, stdev = stdev))
   cluster4 <- colSums(calculateMeanSdCluster(x, cluster = 4, stdev = stdev))
   refined.channel2 <- max(c(cluster1[2], cluster2[2]), na.rm = TRUE)
