@@ -1,4 +1,4 @@
-calculaeMeanSdCluster <- function(x, cluster = 1, stdev = 1)
+calculateMeanSdCluster <- function(x, cluster = 1, stdev = 1)
 {
   x <- filter(x, Cluster == cluster)
   results <- c(mean(x[,1]), mean(x[,2]))

@@ -1,4 +1,4 @@
-poissonCorrection <- function(posCount, count, iterations=100)
+poissonCorrection <- function(posCount, count, iterations=10)
 {
   if(posCount == 0)
   {
