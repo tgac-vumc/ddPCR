@@ -1,4 +1,4 @@
-getPlateWells <- function(prefix=NULL,suffix=NULL)
+getPlateWells <- function(prefix=NULL, suffix=NULL)
 {
   result <- rep(NA, 96)
   
@@ -6,16 +6,16 @@ getPlateWells <- function(prefix=NULL,suffix=NULL)
   start <- 1
   for(i in 1:8)
   {
-    result[start:(start+11)] <- paste(LETTERS[i],numbers, sep="")
+    result[start:(start + 11)] <- paste(LETTERS[i], numbers, sep="")
     start <- start + 12
   }
   if(class(prefix) != "NULL")
   {
-    result <- paste(prefix,result,sep="")
+    result <- paste(prefix, result, sep="")
   }
   if(class(suffix) != "NULL")
   {
-    result <- paste(result,suffix,sep="")
+    result <- paste(result, suffix, sep="")
   }
   return(result)
 }
