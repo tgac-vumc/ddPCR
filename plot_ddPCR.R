@@ -14,10 +14,10 @@ plot_ddPCR <- function(x, dotres = 0.7, main = "ddPCR", pch = 16, colors = "ddpc
        xlim = c(0, xmax), ylim = c(0, ymax))
   sub.text <- dropletCountText(x = x[,3])
   mtext(side = 3,text = sub.text, cex = 0.8)
-  if (length(thresholds) != 2) {
-    if(verbose == TRUE){cat("No threshold data has been given. Data will not be plotted.")}
+  if (class(thresholds) != "matrix") {
+    if(verbose == TRUE){cat("Threshold data must be a matrix. Data will not be plotted.")}
   }else{
-    abline(h = thresholds[1], col = "red") # channel 1
-    abline(v = thresholds[2], col = "red") # channel 2
+    abline(h = thresholds[,1], col = "red") # channel 1
+    abline(v = thresholds[,2], col = "red") # channel 2
   }
 }

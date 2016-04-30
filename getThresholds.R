@@ -6,15 +6,17 @@ getThresholds <- function(x, algorithm = "hist", rm.outliers = TRUE)
   }
   if(tolower(algorithm) == "hist" | tolower(algorithm) == "histogram")
   {
-    results <- c(threshold.ch1 = getThresholdHist(x = x[,1]), threshold.ch2 = getThresholdHist(x = x[,2]))
+    result <- c(getThresholdHist(x = x[,1]), getThresholdHist(x = x[,2]))
   }
   if(tolower(algorithm) == "ranges")
   {
-    results <- c(threshold.ch1 = getThresholdRanges(x = x[,1]), threshold.ch2 = getThresholdRanges(x = x[,2]))
+    result <- c(getThresholdRanges(x = x[,1]), getThresholdRanges(x = x[,2]))
   }
   if(tolower(algorithm) == "kmeans")
   {
-    results <- c(threshold.ch1 = getThresholdRanges(x = x[,1]), threshold.ch2 = getThresholdRanges(x = x[,2]))
+    result <- c(getThresholdRanges(x = x[,1]), getThresholdRanges(x = x[,2]))
   }
-  return(results)
+  
+  result <- matrix(data = result, nrow = 1, ncol = 2, dimnames = list(c("threshold"), c("ch1","ch2")))
+  return(result)
 }

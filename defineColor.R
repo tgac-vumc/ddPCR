@@ -1,12 +1,15 @@
 defineColor <- function(x, density = NULL)
 {
-  ddpcr.colors <- paste(c("#000000", "#FF6600", "#00CC00", "#0033FF", "#FF0000" , "#FF00CC"), sep = "")
-  x <- as.character(x)
-  x <- mgsub(pattern = c("1","3","4","2", "5", "0"), replacement = ddpcr.colors, x = x)
+  result <- rep(NA, length(x))
+  result[grep(pattern = 0, x = x)] <- "#FF0000"
+  result[grep(pattern = 1, x = x)] <- "#000000"
+  result[grep(pattern = 2, x = x)] <- "#0033FF" 
+  result[grep(pattern = 3, x = x)] <- "#FF6600"
+  result[grep(pattern = 4, x = x)] <- "#00CC00"
+  result[grep(pattern = 5, x = x)] <- "#FF00CC"
   if(class(density) != "NULL")
   {
-    x <- paste(x, as.character(density), sep = "") 
+    result <- paste(result, as.character(density), sep = "") 
   }
-  
-  return(x)
+  return(result)
 }
