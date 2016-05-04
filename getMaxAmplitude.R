@@ -1,6 +1,6 @@
-getMaxAmplitude <- function(x)
+getMaxAmplitude <- function(x, tData = NULL)
 {
   result <- c(round(max(x[,1]) + 100), round(max(x[,2]) + 100))
-  result <- matrix(data = result, nrow = 1, ncol = 2, dimnames = list(c("maxAmplitude"), c("ch1","ch2")))
+  result <- thresholdData(tData = tData, amplitude = result, type = 'maxAmplitude')
   return(result)
 }

@@ -1,4 +1,4 @@
-getThresholds <- function(x, algorithm = "hist", rm.outliers = TRUE)
+getThresholds <- function(x, algorithm = "hist", rm.outliers = TRUE, tData = NULL)
 { 
   if(rm.outliers == TRUE)
   {
@@ -17,6 +17,6 @@ getThresholds <- function(x, algorithm = "hist", rm.outliers = TRUE)
     result <- c(getThresholdRanges(x = x[,1]), getThresholdRanges(x = x[,2]))
   }
   
-  result <- matrix(data = result, nrow = 1, ncol = 2, dimnames = list(c("threshold"), c("ch1","ch2")))
+  result <- thresholdData(tData = tData, amplitude = result, type = 'threshold')
   return(result)
 }

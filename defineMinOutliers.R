@@ -1,4 +1,4 @@
-defineMinOutliers <- function(x)
+defineMinOutliers <- function(x, tData = NULL)
 {
   channel1 <- as.numeric(x[,1])
   hist.data <- hist(channel1, breaks=300, plot=FALSE)
@@ -12,7 +12,7 @@ defineMinOutliers <- function(x)
   closestZero <- max((1:firstBigCluster)[hist.data$counts[1:firstBigCluster] == 0])
   MinOutlierCh2 <- hist.data$mids[closestZero]
   
-  results <- c(MinOutlierCh1 = MinOutlierCh1, MinOutlierCh2 = MinOutlierCh2)
+  results <- thresholdData(tData = tData, amplitude = c(MinOutlierCh1, MinOutlierCh2), type = 'minOutlier')
   
   return(results)
 }

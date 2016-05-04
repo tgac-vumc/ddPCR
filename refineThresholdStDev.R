@@ -1,5 +1,9 @@
-refineThresholdStDev <- function(x, stdev = 3, thresholdMatrix)
+refineThresholdStDev <- function(x, stdev = 3, thresholds, tData = NULL)
 {
+  if(class(tData) == "matrix")
+  {
+    
+  }
   result <- c(NA, NA)
   cluster1 <- colSums(calculateMeanSdCluster(x, cluster = 1, stdev = stdev))
   cluster2 <- colSums(calculateMeanSdCluster(x, cluster = 2, stdev = stdev))
@@ -17,6 +21,6 @@ refineThresholdStDev <- function(x, stdev = 3, thresholdMatrix)
     thresholds[1] <- mean(c(refined.channel1, thresholds[1]))
   } else {cat("threshold for channel 1 could not be defined further.\n")}
   
-  
-  return(thresholds)
+  result <- thresholdData(tData = tData, amplitude = thresholds, type = 'thresholdMeanStDev')
+  return(result)
 }
