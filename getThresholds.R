@@ -2,7 +2,16 @@ getThresholds <- function(x, algorithm = "hist", rm.outliers = TRUE, tData = NUL
 { 
   if(rm.outliers == TRUE)
   {
-    x <- x[!x[,3] == 0,]
+    if("minOutlier" %in% row.names(tData) == TRUE) 
+      { # min outliers
+      x <- x[x[,1] > tData[row.names(tData) %in% "minOutlier", 1], ]
+      x <- x[x[,2] > tData[row.names(tData) %in% "minOutlier", 2], ]
+    }
+    if("maxOutlier" %in% row.names(tData) == TRUE) 
+    { # max outliers
+      x <- x[x[,1] < tData[row.names(tData) %in% "maxOutlier", 1], ]
+      x <- x[x[,2] < tData[row.names(tData) %in% "maxOutlier", 2], ]
+    }
   }
   if(tolower(algorithm) == "hist" | tolower(algorithm) == "histogram")
   {
