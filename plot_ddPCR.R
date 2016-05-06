@@ -1,4 +1,4 @@
-plot_ddPCR <- function(x, dotres = 0.7, tData = NULL, main = "ddPCR", pch = 16, colors = "ddpcr", density = 60, verbose = FALSE)
+plot_ddPCR <- function(x, dotres = 0.7, tData = NULL, main = "ddPCR", pch = 16, density = 60, verbose = FALSE)
 {
   if("maxAmplitude" %in% row.names(tData) == TRUE) {
     xmax <- tData[row.names(tData) %in% "maxAmplitude",2]
@@ -7,10 +7,7 @@ plot_ddPCR <- function(x, dotres = 0.7, tData = NULL, main = "ddPCR", pch = 16, 
     xmax <- max(x[,2])
     ymax <- max(x[,1])
   }
-  if(length(colors) == length(unique(x[,3]))) {
-   col.vec <- colors 
-  } else {col.vec <- defineColor(x = x[,3], density = density)}
-  
+  col.vec <- defineColor(x = x[,3], density = density)
   plot(y = x[,1], x = x[,2], cex = dotres, col = col.vec, 
        ylab = "Ch1 Amplitude", xlab = "Ch2 Amplitude", 
        pch = pch, main = main,

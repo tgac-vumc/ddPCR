@@ -44,11 +44,10 @@ ddpcr.analysis <- function(path)
         sample.data <- read.table(file=file.path(path,files[j]), header = TRUE, sep = ",")
         sample.data <- defineClusters(x = sample.data, tData = tData)
         
-        output.file <- file.path(path.targets[i], paste(file.wells[j],"_",file.names[j],".png",sep=""))
-        fileName <- paste(file.wells[j],"_",file.names[j], sep = "")
-        output.file <- file.path(path.targets[i], paste(fileName,".png",sep=""))
-        png(filename=output.file,width = 800, height = 800)
-        plot_ddPCR(combined.data.2, tData = tData, main = fileName)
+        fileName <- paste(file.wells[j],"_", file.names[j], sep = "")
+        output.file <- file.path(path.targets[i], paste(fileName, ".png", sep=""))
+        png(filename = output.file, width = 800, height = 800)
+        plot_ddPCR(sample.data, tData = tData, main = fileName)
         dev.off()
       
         # - [x] Add: Well, Sample, TargetType (ch1/ch2), Target, Status concentration, 
@@ -63,13 +62,12 @@ ddpcr.analysis <- function(path)
         result <- cbind(result, copies.data)
         result <- cbind(result, ngPer1ul = convertCopiesToNanogram(result$CopiesPer1ul))
         result <- cbind(result, calculateStatsRatioFract(copies.data))
-        # - [ ] sample status needs to be updated
         results <- rbind(results,result)
       }
       output.file <- file.path(path.targets[i], paste(experiment,"_", targets[i], "_results.txt", sep=""))
       write.table(x = results,file = output.file, quote = FALSE, sep = "\t", row.names = FALSE)
       cat("Probe", targets[i], "has been processed.\n")
-    } else {cat("Not all files for target ",targets[[i]]," are present for processing.\n", sep="")}
+    } 
 }
 ####
 # SCRIPT USES A DESIGN FILE TO RUN THE PIPELINE
@@ -80,9 +78,9 @@ ddpcr.analysis <- function(path)
 computer.name <- as.character(Sys.info()["nodename"]) 
 if(computer.name == "localhost.localdomain")
 {
-  source.path <- "/home/dirk/Desktop/ownCloud/r_scripts/ddPCR_analysis/scripts_ddPCR"
-  R.utils::sourceDirectory(source.path, modifiedOnly=FALSE);
-  data.path <- "/run/user/1000/gvfs/smb-share:server=vumc-cl-fs02-01,share=microarray-faciliteit$/Data ddPCR/20160317 EGFR test sm_2016-03-17-14-59"
+  source.path <-"/home/dirk/Documents/r_scripts/ddpcr_analysis/scripts_ddpcr"
+  sourceDir(source.path)
+  analysis.path <- "/run/user/1000/g  firstBigCluster <- grep(pattern = max(hist.data$counts), x = hist.data$counts)vfs/smb-share:server=vumc-cl-fs02-01,share=microarray-faciliteit$/Data ddPCR/20160317 EGFR test sm_2016-03-17-14-59"
 }
 if(computer.name == "MacBook-Air-van-Dirk.local")
 { 

@@ -20,12 +20,14 @@ defineClusters <- function(x, tData = NULL)
     if("minOutlier" %in% row.names(tData) == TRUE)
     {
       minOutlier <- tData[row.names(tData) %in% "minOutlier",]
-      results[x[,1] < minOutlier[1] & x[,2] < minOutlier[2]] <- 0 # minOutlier : cluster 0
+      results[x[,1] < minOutlier[1]] <- 0 
+      results[x[,2] < minOutlier[2]] <- 0 # minOutlier : cluster 0
     }
     if("maxOutlier" %in% row.names(tData) == TRUE)
     {
       maxOutlier <- tData[row.names(tData) %in% "maxOutlier",]
-      results[x[,1] > maxOutlier[1] & x[,2] > maxOutlier[2]] <- 0 # maxOutlier : cluster 0
+      results[x[,1] > maxOutlier[1]] <- 0
+      results[x[,2] > maxOutlier[2]] <- 0 # maxOutlier : cluster 0
     }
     
     x[,3] <- results
