@@ -8,14 +8,14 @@ Use ddPCR QuantaSoft software to export raw Amplitude data
 Pipeline example:
 - createDesign
 - loop through individual targets
-	- combine all samples for target 
-	- find outliers
-	- find global thresholds combined data
-	- plot combined data with basic thresholds
-	- refine global thresholds for combined data
-	- define clusters for combined data
-	- plot combined data with refined thresholds
-	- loop through each sample for each target with refined thresholds
-	- plot data
-	- use calculateStats... functions to get sample statistics
+- combine all samples for target 
+- find outliers
+- find global thresholds combined data
+- plot combined data with basic thresholds
+- refine global thresholds for combined data
+- define clusters for combined data
+- plot combined data with refined thresholds
+- loop through each sample for each target with refined thresholds
+- plot data
+- use calculateStats... functions to get sample statistics
 ######
