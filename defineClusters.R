@@ -29,7 +29,13 @@ defineClusters <- function(x, tData = NULL)
       results[x[,1] > maxOutlier[1]] <- 0
       results[x[,2] > maxOutlier[2]] <- 0 # maxOutlier : cluster 0
     }
-    
+    if("minRain" %in% row.names(tData) == TRUE & "maxRain" %in% row.names(tData) == TRUE)
+    {
+      minRain <- tData[row.names(tData) %in% "minRain",]
+      maxRain <- tData[row.names(tData) %in% "maxRain",]
+      results[x[,1] > minRain[1] & x[,1] < maxRain[1]] <- 5
+      results[x[,2] > minRain[2] & x[,2] < maxRain[2]] <- 5 # Rain : cluster 5
+    }
     x[,3] <- results
     }else{stop("Threshold data is not given as a matrix.\n")}
   return(x)

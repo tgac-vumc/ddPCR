@@ -1,6 +1,6 @@
 calculateStatsDroplets <- function(x)
 { # input = amplitide data with defined clusters
-  col.names <- c("Positives", "Negatives", "Ch1-Ch2-", "Ch1+Ch2-", "Ch1+Ch2+", "Ch1-Ch2+", "Outlier", "AcceptedDroplets")
+  col.names <- c("Positives", "Negatives", "Ch1-Ch2-", "Ch1+Ch2-", "Ch1+Ch2+", "Ch1-Ch2+", "Outlier", "Rain", "AcceptedDroplets")
   results <- matrix(0, nrow=2, ncol=length(col.names), dimnames = list(NULL, col.names))
   results[1, colnames(results) == "Positives"] <- countDropletsCluster(x, c(2,3)) #Positives
   results[2, colnames(results) == "Positives"] <- countDropletsCluster(x, c(3,4)) #Positives
@@ -11,6 +11,7 @@ calculateStatsDroplets <- function(x)
   results[1:2, colnames(results) == "Ch1+Ch2+"] <- countDropletsCluster(x, 3)
   results[1:2, colnames(results) == "Ch1-Ch2+"] <- countDropletsCluster(x, 4)
   results[1:2, colnames(results) == "Outlier"] <- countDropletsCluster(x, 0)
+  results[1:2, colnames(results) == "Rain"] <- countDropletsCluster(x, 5)
   results[1:2, colnames(results) == "AcceptedDroplets"] <- countDropletsCluster(x, c(1,2,3,4)) #AcceptedDroplets
   return(results)
 }

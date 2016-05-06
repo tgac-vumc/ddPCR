@@ -3,7 +3,7 @@ source("/home/dirk/Desktop/r_scripts/ddpcr_analysis/scripts_ddpcr/ddpcr.R")
 library(tcltk)
   ddpcr.analysis <- function(path)
   {
-    experiment  <- list.files(path, pattern = "Error.log",full.names = FALSE)
+    experiment  <- list.files(path, pattern = "Error.log", full.names = FALSE)
     experiment <- gsub(pattern = "Error.log", replacement = "",x = experiment)
     data.targets <- get.targets(path = path)
     # - [x] create new directory for the target
