@@ -1,5 +1,6 @@
 createDesign <- function(path, verbose = TRUE)
-{
+{ if(!file.exists(file.path(path, "design.txt")))
+  {
   experiment <- list.files(path, pattern = "Error.log", full.names = FALSE)
   experiment <- gsub(pattern = "Error.log", replacement = "", x = experiment)
   experiment.file <- file.path(path, paste(experiment, ".csv", sep = ""))
@@ -33,7 +34,7 @@ createDesign <- function(path, verbose = TRUE)
       design[well, 4] <- paste(as.character(sort(temp$Target)), collapse = " vs ")
     }
   } else  
-    {
+  {
     if(verbose == TRUE){cat("Experiment setup has not been located. Basic experiment design file will be made.\n")}
     amplitude.files <- list.files(path = path, pattern = "_Amplitude.csv")
     sample.names <- gsub(pattern = "_Amplitude.csv", x = amplitude.files, replacement = "")
@@ -43,7 +44,8 @@ createDesign <- function(path, verbose = TRUE)
     design[,2] <- amplitude.files
     design[,3] <- c("pos", (rep("sample", length(amplitude.files)-2)), "neg")
     design[,4] <- "probe"
-    }
+  }
   output.file <- file.path(path, "design.txt")
   write.table(file = output.file, x = design, quote = FALSE, sep = "\t", row.names = FALSE)
+  }
 }
