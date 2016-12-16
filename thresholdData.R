@@ -2,7 +2,7 @@ thresholdData <- function(tData = NULL, amplitude = NULL, type = NULL) # tData =
 {
   if(class(type) != "NULL")
   {
-    thresholds <- c("minOutlier","maxOutlier","threshold","thresholdMeanStDev","maxAmplitude","minRain","maxRain")
+    thresholds <- c("minOutlier","maxOutlier","threshold","thresholdMeanStDev","maxAmplitude", "mode","minRain","maxRain")
     if(tolower(type) %in% tolower(thresholds) == TRUE)
     {
       type <- thresholds[tolower(thresholds) %in% tolower(type)]
