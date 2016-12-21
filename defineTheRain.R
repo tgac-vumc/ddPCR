@@ -1,25 +1,28 @@
-refineThresholdStDev <- function(x, stdev = 3, tData = NULL)
+defineTheRain <- function(x, stdev = 6, tData = NULL)
 {
-  if (class(tData) == "matrix") 
-  {
-    if("thresholdMeanStDev" %in% row.names(tData) == TRUE)
-    {
+  if (class(tData) == "matrix") {
+    if("thresholdMeanStDev" %in% row.names(tData) == TRUE){
       threshold <- tData[row.names(tData) %in% "thresholdMeanStDev",]
-    }else{stop("thresholdMeanStDev data is not given.\n")}
+    }else if (class(tData) == "matrix") {
+      if("threshold" %in% row.names(tData) == TRUE){
+        threshold <- tData[row.names(tData) %in% "threshold",]
+      }else {stop("Threshold data is not given.\n")}
+    }
     
-   
-    #cluster1 <- colSums(calculateMeanSdCluster(x, cluster = 1, stdev = stdev))
-    #cluster2 <- colSums(calculateMeanSdCluster(x, cluster = 2, stdev = stdev))
-    #cluster4 <- colSums(calculateMeanSdCluster(x, cluster = 4, stdev = stdev))
+    rainResult <- matrix(data = NA, nrow = 2, ncol = 2, 
+                         dimnames = list(c("minRain", "maxRain"), c("ch1.Amplitude","ch2.Amplitude")), 
+                         byrow = TRUE)
+    ch1Low <- calculateMeanSdCluster(x, cluster = c(1,4), stdev = stdev)
+    rainResult[1,1] <- ch1Low[1,1] + ch1Low[2,1]
+    ch1High <- calculateMeanSdCluster(x, cluster = c(2,3), stdev = stdev)
+    rainResult[2,1] <- ch1High[1,1] - ch1High[2,1]
+    ch2Low <- calculateMeanSdCluster(x, cluster = c(1,2), stdev = stdev)
+    rainResult[1,2] <- ch2Low[1,2] + ch2Low[2,2]
+    ch2High <- calculateMeanSdCluster(x, cluster = c(3,4), stdev = stdev)
+    rainResult[2,2] <- ch2High[1,2] - ch2High[2,2]
     
-    #refined.channel1 <- max(c(cluster1[1], cluster4[1]), na.rm = TRUE)
-    #refined.channel2 <- max(c(cluster1[2], cluster2[2]), na.rm = TRUE)
-    
-
-    
-    result <- thresholdData(tData = tData, amplitude = threshold, type = 'minRain')
-    result <- thresholdData(tData = tData, amplitude = threshold, type = 'maxRain')
-    return(result)
-    
-  }else{stop(".\n")}
+    tData <- thresholdData(tData = tData, amplitude = rainResult[1,], type = 'minRain')
+    tData <- thresholdData(tData = tData, amplitude = rainResult[2,], type = 'maxRain')
+    return(tData)
+  }
 }
