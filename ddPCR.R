@@ -10,4 +10,3 @@ checkPackages <- function(x){
 checkPackages(c("dplyr", "magrittr", "xlsx"))
 
 # end, HF van Essen 2016
-  
