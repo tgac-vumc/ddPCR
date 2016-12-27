@@ -16,7 +16,7 @@ defineClusters <- function(x, tData = NULL, outlier = TRUE, rain = TRUE)
     results[x[,1] > threshold[1] & x[,2] < threshold[2]] <- 2 # ch1+ch2- : cluster 2
     results[x[,1] > threshold[1] & x[,2] > threshold[2]] <- 3 # ch1+ch2+ : cluster 3
     results[x[,1] < threshold[1] & x[,2] > threshold[2]] <- 4 # ch1-ch2+ : cluster 4
-    if (ourlier == TRUE){
+    if (outlier == TRUE){
       if("minOutlier" %in% row.names(tData) == TRUE)
       {
         minOutlier <- tData[row.names(tData) %in% "minOutlier",]
