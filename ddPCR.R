@@ -1,15 +1,13 @@
+checkPackages <- function(x){
+  for (i in 1:length(x)){
+    package <- as.character(x[i])
+    if( package %in% installed.packages()[,1] == FALSE ){
+      install.packages(package)
+    } else { library(package, character.only = TRUE ) }
+  }
+}
 # PACKAGES
+checkPackages(c("dplyr", "magrittr", "xlsx"))
 
-if("dplyr" %in% installed.packages()[,1] == FALSE){
-  install.packages("dplyer")
-} else { library(dplyr) }
-if("magrittr" %in% installed.packages()[,1] == FALSE){
-  install.packages("magrittr")
-} else { library(magrittr) }
-if("xlsx" %in% installed.packages()[,1] == FALSE){
-  install.packages("xlsx")
-} else { library(xlsx) }
-
-#library(ddpcR)
 # end, HF van Essen 2016
   
