@@ -8,15 +8,12 @@ defineTheRain <- function(x, stdev = c(3,3), tData = NULL)
         threshold <- tData[row.names(tData) %in% "threshold",]
       }else {stop("Threshold data is not given.\n")}
     }
-    # [x] set option to set different stdev for ch1 & ch2
-    # [ ] check for length of stdev , if length == 1, then stdev is the same for ch1 & ch1
-    # [ ] check for length of stdev , if length == 2, then stdev is the different for ch1 & ch1
     if(length(stdev) == 1){
-      stdevLow == stdev[1]
-      stdevHigh == stdev[1]
-    }else if(length(stdev) == 1){
-      stdevLow == stdev[1]
-      stdevHigh == stdev[2]
+      stdevLow <- stdev[1]
+      stdevHigh <- stdev[1]
+    }else if(length(stdev) == 2){
+      stdevLow <- stdev[1]
+      stdevHigh <- stdev[2]
     }else {stop("Standard deviation setting to define the Rain cut-off is not in the correct format.\n")}
       
     x <- defineClusters(x = x, tData = tData)
