@@ -26,7 +26,7 @@ createDesign <- function(path, verbose = TRUE)
       sampleName <- unique(temp$Sample)
       design[well, 1] <- paste(sampleName, collapse = "_")
       design[well, 2] <- paste(experiment, "_", wells[well], "_Amplitude.csv", sep = "")
-      if(tolower(sampleName) %in% c("ntc", "water", "neg", "negative") == TRUE)
+      if(tolower(sampleName) %in% c("ntc", "water", "neg", "negative", "te buffer") == TRUE)
       {
         design[well, 3] <- "neg"
       } else { design[well, 3] <- "sample" }
