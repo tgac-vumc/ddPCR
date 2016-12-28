@@ -1,7 +1,6 @@
 ddPCRdata <- setClass("ddPCRdata", slots = c(assayData = "list", phenoData = "matrix", experimentData = "list"))
 
-readAmplitudeFiles <- function(files, nrows=25000, verbose=FALSE)
-{
+readAmplitudeFiles <- function(files, nrows=25000, verbose=FALSE){ # not used in pipeline
   nFiles <- length(files)
   Ch1.Amplitude <- matrix(NA, nrow = nrows, ncol = nFiles)
   Ch2.Amplitude <- matrix(NA, nrow = nrows, ncol = nFiles)
@@ -44,4 +43,21 @@ readAmplitudeFiles <- function(files, nrows=25000, verbose=FALSE)
   )
   object <- new('ddPCRdata', assayData=assayData, phenoData=phenoData, experimentData=experimentData)
   return(object)
+}
+combineSamples <- function(path, files, verbose = TRUE){
+  combined.data <- NULL
+  progress <- txtProgressBar(min = 0, max = length(files), style = 3)
+  for(i in 1:length(files))
+  { 
+    nrlines <- NULL
+    file.name <- file.path(path, files[i])
+      if(length(count.fields(file.name)) > 0){
+        if(verbose == TRUE){
+          setTxtProgressBar(progress, i)
+        }
+      sample.data <- read.table(file=file.name, header = TRUE, sep = ",")
+      combined.data <- rbind(combined.data, sample.data )
+    }
+  }
+  return(combined.data)
 }

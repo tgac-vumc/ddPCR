@@ -1,5 +1,5 @@
-createDesign <- function(path, verbose = TRUE)
-{ if(!file.exists(file.path(path, "design.txt"))) {
+createDesign <- function(path, verbose = TRUE){ 
+  if(!file.exists(file.path(path, "design.txt"))) {
   experiment <- list.files(path, pattern = "Amplitude.csv", full.names = FALSE)[1]
   experiment <- paste(strsplit(x = experiment, split = "_")[[1]][1], ".csv", sep = "")
 
@@ -26,7 +26,7 @@ createDesign <- function(path, verbose = TRUE)
       sampleName <- unique(temp$Sample)
       design[well, 1] <- paste(sampleName, collapse = "_")
       design[well, 2] <- paste(experiment, "_", wells[well], "_Amplitude.csv", sep = "")
-      if(tolower(sampleName) %in% c("ntc", "water", "neg", "negative", "te buffer") == TRUE)
+      if(tolower(sampleName) %in% c("ntc", "water", "neg", "negative", "te buffer", "h2o") == TRUE)
       {
         design[well, 3] <- "neg"
       } else { design[well, 3] <- "sample" }
@@ -48,3 +48,65 @@ createDesign <- function(path, verbose = TRUE)
   write.table(file = output.file, x = design, quote = FALSE, sep = "\t", row.names = FALSE)
   }
 }
+getControls <- function(x, pos = c("positive", "pos control"), ntc = c("te buffer", "water"), neg = ""){ 
+  # x = vector of sample names is input
+  results <- rep("sample", length(x))
+  x <- tolower(x)
+  results[x %in% tolower(pos)] <- "pos"
+  results[x %in% tolower(ntc)] <- "ntc"
+  results[x %in% tolower(neg)] <- "neg"
+  return(results)
+}
+getTargets <- function(path){ # will use .csv file of the experiment located in path
+  experiment <- list.files(path, pattern = "Amplitude.csv", full.names = FALSE)[1]
+  experiment <- paste(strsplit(x = experiment, split = "_")[[1]][1], ".csv", sep = "")
+  if(file.exists(file) == TRUE)
+  {
+    data <-  read.csv(file = file, header = TRUE, sep = ",", check.names = FALSE, row.names = NULL)
+    if(colnames(data)[1] == "row.names")
+    {
+      colnames(data) <- colnames(data)[2:dim(data)[2]]
+      data <- data[,1:(dim(data)[2]-1)]
+    }
+  } else { break 
+  }
+  targets <- unique(mgsub(pattern = c("_WT", "_wt", " wt", " WT"), replacement = c("", "", "", ""), x = data$Target))
+  result <- list()
+  for(i in 1:length(targets))
+  {
+    result[[i]] <- data[grep(data$Target,pattern = targets[i]),]
+  }
+  targets <- gsub(pattern = " ", replacement = "_", x = targets)
+  names(result) <- targets
+  return(result)
+}
+createTargetFolders <- function(x, path = NULL){ # x = output of get.targets(). Will create output folders at specified path.
+  paths <- NULL
+  if(class(x) == "list" & class(path) != "NULL")
+  {
+    paths <- file.path(path, names(x))
+    for(i in 1:length(paths))
+    {
+      if(!file.exists(paths[i]))
+      {
+        dir.create(paths[i])
+      }
+    }
+  } else if (class(x) == "character" | class(x) == "factor")
+  {
+    if(class(path) != "NULL")
+    {
+      for(i in 1:length(x))
+      {
+        paths[i] <- file.path(path, x[i])
+        if(!file.exists(paths[i]))
+        {
+          dir.create(paths[i])
+        }
+      }
+    }
+  }
+  return(paths)
+}
+# [ ] getTargets has overlap with createDesign... 
+# [ ] getControls has overlap with createDesign... 
