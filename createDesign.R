@@ -1,9 +1,8 @@
 createDesign <- function(path, verbose = TRUE)
-{ if(!file.exists(file.path(path, "design.txt")))
-  {
-  experiment <- list.files(path, pattern = "Error.log", full.names = FALSE)
-  experiment <- gsub(pattern = "Error.log", replacement = "", x = experiment)
-  experiment.file <- file.path(path, paste(experiment, ".csv", sep = ""))
+{ if(!file.exists(file.path(path, "design.txt"))) {
+  experiment <- list.files(path, pattern = "Amplitude.csv", full.names = FALSE)[1]
+  experiment <- paste(strsplit(x = experiment, split = "_")[[1]][1], ".csv", sep = "")
+
   if(file.exists(experiment.file) == TRUE)
   {
     if(verbose == TRUE){cat("Experiment setup has been located.\n")}
