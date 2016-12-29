@@ -44,20 +44,22 @@ readAmplitudeFiles <- function(files, nrows=25000, verbose=FALSE){ # not used in
   object <- new('ddPCRdata', assayData=assayData, phenoData=phenoData, experimentData=experimentData)
   return(object)
 }
-combineSamples <- function(path, files, verbose = TRUE){
+combineSamples <- function(path, files, verbose = FALSE){
   combined.data <- NULL
-  progress <- txtProgressBar(min = 0, max = length(files), style = 3)
+  if(verbose == TRUE){
+    cat("Reading Amplitude files.\n")
+  }
   for(i in 1:length(files))
   { 
     nrlines <- NULL
     file.name <- file.path(path, files[i])
       if(length(count.fields(file.name)) > 0){
-        if(verbose == TRUE){
-          setTxtProgressBar(progress, i)
-        }
       sample.data <- read.table(file=file.name, header = TRUE, sep = ",")
       combined.data <- rbind(combined.data, sample.data )
-    }
+      }
+  }
+  if(verbose == TRUE){
+    cat("Amplitude files are combined.\n")
   }
   return(combined.data)
 }

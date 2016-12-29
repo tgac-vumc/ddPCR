@@ -27,7 +27,7 @@ getThresholdsKmeans <- function(x, rm.outliers = TRUE){
   results <- kmeans(x[,1:2], 4)
   return(results)
 }
-getThresholds <- function(x, algorithm = "hist", rm.outliers = TRUE, tData = NULL){ 
+getThresholds <- function(x, algorithm = "hist", rm.outliers = TRUE, tData = NULL, verbose = FALSE){ 
   if(rm.outliers == TRUE)
   {
     if("minOutlier" %in% row.names(tData) == TRUE) 
@@ -43,28 +43,38 @@ getThresholds <- function(x, algorithm = "hist", rm.outliers = TRUE, tData = NUL
   }
   if(tolower(algorithm) == "hist" | tolower(algorithm) == "histogram")
   {
+    if(verbose == TRUE){
+      cat("Setting threshold based on 'histogram'.\n")
+    }
     result <- c(getThresholdHist(x = x[,1]), getThresholdHist(x = x[,2]))
   }
   if(tolower(algorithm) == "ranges")
   {
+    if(verbose == TRUE){
+      cat("Setting threshold based on 'ranges'.\n")
+    }
     result <- c(getThresholdRanges(x = x[,1]), getThresholdRanges(x = x[,2]))
   }
   if(tolower(algorithm) == "kmeans")
   {
+    if(verbose == TRUE){
+      cat("Setting threshold based on 'kmeans'.\n")
+    }
     result <- c(getThresholdRanges(x = x[,1]), getThresholdRanges(x = x[,2]))
   }
   
   result <- thresholdData(tData = tData, amplitude = result, type = 'threshold')
   return(result)
 }
-refineThresholdStDev <- function(x, stdev = 3, tData = NULL){
+refineThresholdStDev <- function(x, stdev = 3, tData = NULL, verbose = FALSE){
   if (class(tData) == "matrix") 
   {
     if("threshold" %in% row.names(tData) == TRUE)
     {
       threshold <- tData[row.names(tData) %in% "threshold",]
-    }else{stop("Threshold data is not given.\n")}
-    
+    }else{
+      stop("Threshold data is not given.\n")
+      }
     cluster1 <- colSums(calculateMeanSdCluster(x, cluster = 1, stdev = stdev))
     cluster2 <- colSums(calculateMeanSdCluster(x, cluster = 2, stdev = stdev))
     cluster4 <- colSums(calculateMeanSdCluster(x, cluster = 4, stdev = stdev))
@@ -74,13 +84,26 @@ refineThresholdStDev <- function(x, stdev = 3, tData = NULL){
     
     if(refined.channel1 < threshold[1])
     {
+      if(verbose == TRUE){
+        cat("Refining threshold with Mean and Standard Deviation setting of",stdev, " for channel 1.\n")
+      }
       threshold[1] <- mean(c(refined.channel1, threshold[1]))
-    } else {cat("threshold for channel 1 could not be defined further.\n")}
+    } else {
+      if(verbose == TRUE){
+      cat("threshold for channel 1 could not be defined further.\n")
+      }
+    }
     if(refined.channel2 < threshold[2])
     {
+      if(verbose == TRUE){
+        cat("Refining threshold with Mean and Standard Deviation setting of",stdev, " for channel 2.\n")
+      }
       threshold[2] <- mean(c(refined.channel2, threshold[2]))
-    } else {cat("threshold for channel 2 could not be defined further.\n")}
-    
+    } else {
+      if(verbose == TRUE){
+        cat("threshold for channel 2 could not be defined further.\n")
+        }
+    }
     result <- thresholdData(tData = tData, amplitude = threshold, type = 'thresholdMeanStDev')
     return(result)
     

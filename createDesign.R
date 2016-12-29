@@ -1,12 +1,14 @@
 createDesign <- function(path, verbose = TRUE){ 
   if(!file.exists(file.path(path, "design.txt"))) {
   experiment <- list.files(path, pattern = "Amplitude.csv", full.names = FALSE)[1]
-  experiment <- paste(strsplit(x = experiment, split = "_")[[1]][1], ".csv", sep = "")
+  experiment <- strsplit(x = experiment, split = "_")[[1]][1]
+  experiment.file <- paste(experiment, ".csv", sep = "")
 
-  if(file.exists(experiment.file) == TRUE)
-  {
-    if(verbose == TRUE){cat("Experiment setup has been located.\n")}
-    data <- read.table(file = experiment.file, header = TRUE, sep = ",", check.names = FALSE, row.names = NULL)
+  if(file.exists(file.path(path, experiment.file)) == TRUE){
+    if(verbose == TRUE){
+      cat("Experiment setup has been located.\n")
+      }
+    data <- read.table(file = file.path(path, experiment.file), header = TRUE, sep = ",", check.names = FALSE, row.names = NULL)
     colnames <- c(colnames(data)[2:9],"Supermix")
     data <- data.frame(data[,1:9])
     colnames(data) <- colnames
@@ -34,7 +36,9 @@ createDesign <- function(path, verbose = TRUE){
     }
   } else  
   {
-    if(verbose == TRUE){cat("Experiment setup has not been located. Basic experiment design file will be made.\n")}
+    if(verbose == TRUE){
+      cat("Experiment setup has not been located. Basic experiment design file will be made.\n")
+      }
     amplitude.files <- list.files(path = path, pattern = "_Amplitude.csv")
     sample.names <- gsub(pattern = "_Amplitude.csv", x = amplitude.files, replacement = "")
     design <- matrix(data = "", nrow = length(amplitude.files), ncol = 4)
@@ -58,9 +62,9 @@ getControls <- function(x, pos = c("positive", "pos control"), ntc = c("te buffe
   return(results)
 }
 getTargets <- function(path){ # will use .csv file of the experiment located in path
-  experiment <- list.files(path, pattern = "Amplitude.csv", full.names = FALSE)[1]
-  experiment <- paste(strsplit(x = experiment, split = "_")[[1]][1], ".csv", sep = "")
-  if(file.exists(file) == TRUE)
+  experiment.file <- list.files(path, pattern = "Amplitude.csv", full.names = FALSE)[1]
+  experiment.file <- paste(strsplit(x = experiment.file, split = "_")[[1]][1], ".csv", sep = "")
+  if(file.exists(experiment.file) == TRUE)
   {
     data <-  read.csv(file = file, header = TRUE, sep = ",", check.names = FALSE, row.names = NULL)
     if(colnames(data)[1] == "row.names")
