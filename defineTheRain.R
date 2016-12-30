@@ -1,4 +1,4 @@
-defineTheRain <- function(x, stdev = c(3,3), tData = NULL)
+defineTheRain <- function(x, stdev = c(3,3), tData = NULL, verbose = TRUE)
 {
   if (class(tData) == "matrix") {
     if("thresholdMeanStDev" %in% row.names(tData) == TRUE){
@@ -15,7 +15,11 @@ defineTheRain <- function(x, stdev = c(3,3), tData = NULL)
       stdevLow <- stdev[1]
       stdevHigh <- stdev[2]
     }else {stop("Standard deviation setting to define the Rain cut-off is not in the correct format.\n")}
-      
+    
+    if(verbose == TRUE){
+      cat("DefineTheRain is calculated with a Standard Deviation of",stdev[1], "for ch1 and", stdev[2], "for ch2.\n")
+    }  
+    
     x <- defineClusters(x = x, tData = tData)
     rainResult <- matrix(data = NA, nrow = 2, ncol = 2, 
                          dimnames = list(c("minRain", "maxRain"), c("ch1.Amplitude","ch2.Amplitude")), 

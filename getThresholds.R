@@ -1,3 +1,28 @@
+removeOutliers <- function(x, cutoff = 5){
+  percentage <- round((nrow(x)/100) * (cutoff/2))
+  selection <- c(1:percentage, (nrow(x)-percentage):nrow(x))
+  selection <- !(1:nrow(x)  %in% selection)
+  x <- x[order(x[,1]),]
+  x <- x[selection,]
+  selection <- c(1:percentage, (nrow(x)-percentage):nrow(x))
+  selection <- !(1:nrow(x)  %in% selection)
+  x <- x[order(x[,2]),]
+  x <- x[selection,]
+  return(x)
+}
+getNegatives <- function(design = NULL, verbose = TRUE){
+  if(is.null(design) == TRUE){
+    stop("No design file is given.\n")
+  } else {
+    negatives <- design$Type == "neg"
+    if(TRUE %in% negatives == TRUE){
+      design <- design[negatives,]
+    } else {
+      stop("No negative control was found.\n")
+    }
+  } 
+  return(design)
+}
 getThresholdHist <- function(x){
   x <- as.numeric(x)
   hist.data <- hist(x, breaks=15, plot=FALSE)
@@ -27,6 +52,37 @@ getThresholdsKmeans <- function(x, rm.outliers = TRUE){
   results <- kmeans(x[,1:2], 4)
   return(results)
 }
+getThresholdDensity <- function(path = NULL, design = NULL, tData = NULL, breaks = 100, verbose = TRUE){
+  if(is.null(design) == TRUE){
+    stop("No design file has been given.\n")
+  } else {
+    if(verbose == TRUE){
+      cat("processing negative samples.\n")
+    }
+    design <- getNegatives(design)
+    x <- combineSamples(path = path, files = design$File)
+    x <- removeOutliers(x = x, cutoff = 3)
+    maxAmplitude <- getMaxAmplitude(x)
+    densityCh1 <- hist(x[,1], breaks=breaks, plot=FALSE)
+    densityCh1 <- densityCh1$mids[densityCh1$density == max(densityCh1$density)]
+    densityCh2 <- hist(x[,2], breaks=breaks, plot=FALSE)
+    densityCh2 <- densityCh2$mids[densityCh2$density == max(densityCh2$density)]
+    
+    for(stdevSetting in 1:10){
+      meanPlusSd <- colSums(calculateMeanSdCluster(x, stdev = stdevSetting, cluster = 9))
+      if((meanPlusSd[1] > maxAmplitude[1] & meanPlusSd[2] > maxAmplitude[2]) == TRUE){
+        stdevSetting <- (stdevSetting + 10)
+        meanPlusSd <- colSums(calculateMeanSdCluster(x, stdev = stdevSetting, cluster = 9))
+        tData <- thresholdData(tData = tData, amplitude = meanPlusSd, type = 'threshold')
+        break()
+      }
+    }
+    if(verbose == TRUE){
+      cat("Threshold from negative is set by 'mean +", stdevSetting,"sd'.\n")
+    }
+  }
+  return(tData)
+} 
 getThresholds <- function(x, algorithm = "hist", rm.outliers = TRUE, tData = NULL, verbose = FALSE){ 
   if(rm.outliers == TRUE)
   {
