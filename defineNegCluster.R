@@ -10,19 +10,27 @@ removeOutliers <- function(x, cutoff = 5){
   x <- x[selection,]
   return(x)
 }
-
-getNegatives <- function(design){
-  # get negatives from design file
+getNegatives <- function(design = NULL, verbose = TRUE){
+  if(is.null(design) == TRUE){
+      stop("No design file is given.\n")
+  } else {
+    negatives <- design$Type == "neg"
+    if(TRUE %in% negatives == TRUE){
+      design <- design[negatives,]
+    } else {
+      stop("No negative control was found.\n")
+    }
+  } 
+  return(design)
 }
-
 defineNegCluster <- function(x, tData = NULL, design = NULL, well = NULL){
 
   # [ ] get negatives from design file
-  if(is.null(design) == TRUE){
+  if(is.null(design) == FALSE){
     getNegatives(design = design)
   }
   # [ ] get negatives from specific wells
-  if(is.null(well) == TRUE){
+  if(is.null(well) == FALSE){
     getPlateWells()
   }
   
@@ -33,3 +41,9 @@ defineNegCluster <- function(x, tData = NULL, design = NULL, well = NULL){
   
   return(tData)
 }
+
+# [ ] function: highest density
+# [ ] function: get negatives from design
+# [ ] create pipeline for neg analysis
+# [ ] 
+# [ ] 
