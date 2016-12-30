@@ -1,3 +1,17 @@
+# This is and example of the ddPCR pipeline analysis.
+# Before use, the file MUST be copied to a different
+# location. Then the "#" may be removed and the code
+# can be run. Please do not make any changes in this
+# document.
+#
+# HFvE, 20161227
+
+#### START USER INPUT
+
+source.path <- "enter path with location of ddPCR functions here..."
+
+#### END USER INPUT
+
 sourceDir <- function(path, trace = TRUE, ...) {
   for (nm in list.files(path, pattern = "\\.[RrSsQq]$")) {
     if(trace) cat(nm,"")           
@@ -35,9 +49,15 @@ ddpcr.analysis <- function(path) {
       plot_ddPCR(combined.data, tData = tData, main=fileName)
       dev.off()
       
-      tData <- refineThresholdStDev(combined.data, tData = tData)
+      tData <- refineThresholdStDev(combined.data, tData = tData, )
       combined.data.2 <- defineClusters(combined.data, tData)
-      tData <- defineTheRain(combined.data.2, tData = tData, stdev = 6.5)
+      fileName <- "combined_data_refinedThreshold"
+      output.file <- file.path(path.targets[i], paste(fileName,".png",sep=""))
+      png(filename=output.file,width = 800, height = 800)
+      plot_ddPCR(combined.data.2, tData = tData, main = fileName)
+      dev.off()
+      
+      tData <- defineTheRain(combined.data.2, tData = tData, stdev = c(7,5))
       combined.data.2 <- defineClusters(combined.data, tData)
       fileName <- "combined_data_refinedThreshold_Rain"
       output.file <- file.path(path.targets[i], paste(fileName,".png",sep=""))
@@ -75,23 +95,15 @@ ddpcr.analysis <- function(path) {
       cat("Probe", as.character(targets[i]), "has been processed.\n")
     } 
 }
-####
-computer.name <- as.character(Sys.info()["nodename"]) 
-if(computer.name == "localhost.localdomain")
-{
-  source.path <-"/home/dirk/Documents/r_scripts/ddpcr_analysis/scripts_ddpcr"
-  sourceDir(source.path)
-}
-if(computer.name == "MacBook-Air-van-Dirk.local")
-{ 
-  source.path <- "/Users/dirkvanessen/Documents/coding/R/ddpcr_analysis/ddpcr_scripts"
-  sourceDir(source.path)
-}
-####
 
-location <- file.choose()
-inputFile <- basename(location)
-pad <- unlist(strsplit(location, inputFile))
-setwd(pad)
+### TO RUN.. USE CODE BELOW
+#
+# sourceDir(source.path)
+#
+# location <- file.choose()
+# inputFile <- basename(location)
+# pad <- unlist(strsplit(location, inputFile))
+# setwd(pad)
+#
+# ddpcr.analysis(path = pad)
 
-ddpcr.analysis(path = pad)
