@@ -3,18 +3,24 @@ plot_ddPCR <- function(x = NULL, dotres = 0.7, tData = NULL, main = "ddPCR", pch
   if(is.null(x) == TRUE){
     stop("x is not given.\n")
   }
-  if(is.null(tData) == TRUE){
-    cat("tData is not given.\n")
-    xmax <- max(x[,2])
-    ymax <- max(x[,1])
-  } else if (class(tData) != "matrix") {
-    if(verbose == TRUE){cat("Threshold data must be a matrix. tData will not be used.")}
-    xmax <- max(x[,2])
-    ymax <- max(x[,1])
-  } else if ("maxAmplitude" %in% row.names(tData) == TRUE) {
-    xmax <- tData[row.names(tData) %in% "maxAmplitude",2]
-    ymax <- tData[row.names(tData) %in% "maxAmplitude",1]
-  }
+  if(is.null(tData) != TRUE){
+    if (class(tData) == "matrix") {
+      if ("maxAmplitude" %in% row.names(tData) == TRUE){
+        if(verbose == TRUE){cat("Reading Threshold data.\n")}
+        xmax <- tData[row.names(tData) %in% "maxAmplitude",2]
+        ymax <- tData[row.names(tData) %in% "maxAmplitude",1]
+      } else {
+        if(verbose == TRUE){cat("Amplitude data not found. tData will not be used.\n")}
+        xmax <- max(x[,2])
+        ymax <- max(x[,1])
+      }
+    } else {
+      if(verbose == TRUE){cat("Threshold data must be a matrix. tData will not be used.\n")}
+      xmax <- max(x[,2])
+      ymax <- max(x[,1])
+     
+    }
+  } 
   
   col.vec <- defineColor(x = x[,3], density = density)
   plot(y = x[,1], x = x[,2], cex = dotres, col = col.vec, 
