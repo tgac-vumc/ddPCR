@@ -1,6 +1,6 @@
 createThresholdMatrix <- function(){
   result <- matrix(data = NA, nrow = 7, ncol = 2, 
-         dimnames = list(c("minOutlier","maxOutlier","threshold","thresholdMeanStDev","maxAmplitude","minRain","maxRain"), c("ch1","ch2")))
+         dimnames = list(c("minOutlier","maxOutlier","threshold","thresholdMeanStDev","maxAmplitude","minAmplitude","minRain","maxRain"), c("ch1","ch2")))
   return(result)
 }
 addThresholdData <- function(x = NULL, add, type = ''){
@@ -8,16 +8,16 @@ addThresholdData <- function(x = NULL, add, type = ''){
   if (class(result != "matrix"))
   {
     result <- matrix(data = NA, nrow = 7, ncol = 2, 
-                     dimnames = list(c("minOutlier","maxOutlier","threshold","thresholdMeanStDev","maxAmplitude","minRain","maxRain"), c("ch1","ch2")))
+                     dimnames = list(c("minOutlier","maxOutlier","threshold","thresholdMeanStDev","maxAmplitude","minAmplitude","minRain","maxRain"), c("ch1","ch2")))
     
   }
-  dimnames = list(c("minOutlier","maxOutlier","threshold","thresholdMeanStDev","maxAmplitude","minRain","maxRain"), c("ch1","ch2"))
+  dimnames = list(c("minOutlier","maxOutlier","threshold","thresholdMeanStDev","maxAmplitude","minAmplitude","minRain","maxRain"), c("ch1","ch2"))
 
 }
 thresholdData <- function(tData = NULL, amplitude = NULL, type = NULL) {
   if(class(type) != "NULL")
   {
-    thresholds <- c("minOutlier","maxOutlier","threshold","thresholdMeanStDev","maxAmplitude", "mode","minRain","maxRain")
+    thresholds <- c("minOutlier","maxOutlier","threshold","thresholdMeanStDev","maxAmplitude","minAmplitude","mode","minRain","maxRain")
     if(tolower(type) %in% tolower(thresholds) == TRUE)
     {
       type <- thresholds[tolower(thresholds) %in% tolower(type)]

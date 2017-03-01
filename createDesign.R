@@ -1,5 +1,5 @@
 createDesign <- function(path, verbose = TRUE){ 
-  if(!file.exists(file.path(path, "design.txt"))) {
+  if(file.exists(file.path(path, "design.txt")) == FALSE) {
   experiment <- list.files(path, pattern = "Amplitude.csv", full.names = FALSE)[1]
   experiment <- strsplit(x = experiment, split = "_")[[1]][1]
   experiment.file <- paste(experiment, ".csv", sep = "")
@@ -8,7 +8,7 @@ createDesign <- function(path, verbose = TRUE){
     if(verbose == TRUE){
       cat("Experiment setup has been located.\n")
       }
-    data <- read.table(file = file.path(path, experiment.file), header = TRUE, sep = ",", check.names = FALSE, row.names = NULL)
+    data <- read.table(file = file.path(path, experiment.file), header = TRUE, sep = ",", check.names = FALSE, row.names = NULL, fill = TRUE)
     colnames <- c(colnames(data)[2:9],"Supermix")
     data <- data.frame(data[,1:9])
     colnames(data) <- colnames
@@ -22,8 +22,7 @@ createDesign <- function(path, verbose = TRUE){
     design <- matrix(data = "", nrow = length(wells), ncol = 4)
     colnames(design) <- c("Name", "File", "Type", "Probe")
     
-    for(well in 1:length(wells))
-    {
+    for(well in 1:length(wells)) {
       temp <- data[data$Well %in% wells[well],]
       sampleName <- unique(temp$Sample)
       design[well, 1] <- paste(sampleName, collapse = "_")
@@ -34,8 +33,7 @@ createDesign <- function(path, verbose = TRUE){
       } else { design[well, 3] <- "sample" }
       design[well, 4] <- paste(as.character(sort(temp$Target)), collapse = " vs ")
     }
-  } else  
-  {
+  } else  {
     if(verbose == TRUE){
       cat("Experiment setup has not been located. Basic experiment design file will be made.\n")
       }
