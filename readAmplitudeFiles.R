@@ -1,4 +1,4 @@
-ddPCRdata <- setClass("ddPCRdata", slots = c(assayData = "list", phenoData = "matrix", experimentData = "list"))
+ddPCRdata <- setClass("ddPCRdata", slots = c(assayData = "list", phenoData = "list", experimentData = "list"))
 
 readAmplitudeFiles <- function(files, nrows=25000, verbose=FALSE){ # not used in pipeline
   nFiles <- length(files)
@@ -24,6 +24,14 @@ readAmplitudeFiles <- function(files, nrows=25000, verbose=FALSE){ # not used in
         } else {cat("Reading amplitude data: '", basename(files[i]),"'\n", sep="")}
       }
       Sample.Names[i] <- mgsub(x=basename(files[i]), pattern = c("_Amplitude.csv",".csv"), replacement = c("",""))
+      
+      ### ADD PHENODATA
+      columns <- c("totalDroplets","minOutlier","maxOutlier","threshold","thresholdMeanStDev","minAmplitude","maxAmplitude","minRain","maxRain")
+      channel.1 <- matrix(data = NA, nrow = length(Sample.Names), ncol = length(columns), 
+                          dimnames = list(Sample.Names, columns))
+      channel.2 <- matrix(data = NA, nrow = length(Sample.Names), ncol = length(columns), 
+                          dimnames = list(Sample.Names, columns))
+      
       Total.Droplets[i] <- dim(sample.data)[1]
       Ch1.Amplitude[1:Total.Droplets[i],i] <- sample.data[,1]
       Ch2.Amplitude[1:Total.Droplets[i],i] <- sample.data[,2]
@@ -34,7 +42,7 @@ readAmplitudeFiles <- function(files, nrows=25000, verbose=FALSE){ # not used in
     }
   }
   assayData <- list(Ch1.Amplitude = Ch1.Amplitude, Ch2.Amplitude = Ch2.Amplitude, Cluster = Cluster, Use = Use)
-  phenoData <- cbind(names=as.character(Sample.Names), Total.Droplets=Total.Droplets, Ch1.Max=Ch1.Max, Ch2.Max=Ch2.Max)
+  phenoData <- list(channel.1 = channel.1, channel.2 = channel.2)
   experimentData <- list(
     Channel.Name=c("Ch1.Amplitude" ,"Ch2.Amplitude"), 
     Cluster.Number=c(1,2,3,4,0,5),
@@ -44,6 +52,7 @@ readAmplitudeFiles <- function(files, nrows=25000, verbose=FALSE){ # not used in
   object <- new('ddPCRdata', assayData=assayData, phenoData=phenoData, experimentData=experimentData)
   return(object)
 }
+
 combineSamples <- function(path, files, verbose = FALSE){
   combined.data <- NULL
   if(verbose == TRUE){

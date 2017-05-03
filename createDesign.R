@@ -3,25 +3,19 @@ createDesign <- function(path, verbose = TRUE){
   experiment <- list.files(path, pattern = "Amplitude.csv", full.names = FALSE)[1]
   experiment <- strsplit(x = experiment, split = "_")[[1]][1]
   experiment.file <- paste(experiment, ".csv", sep = "")
-
   if(file.exists(file.path(path, experiment.file)) == TRUE){
     if(verbose == TRUE){
       cat("Experiment setup has been located.\n")
       }
     data <- read.table(file = file.path(path, experiment.file), header = TRUE, sep = ",", check.names = FALSE, row.names = NULL, fill = TRUE)
-    colnames <- c(colnames(data)[2:9],"Supermix")
     data <- data.frame(data[,1:9])
-    colnames(data) <- colnames
-    data$ExptType <-  paste(experiment, "_", data$Well, "_Amplitude.csv", sep = "")
-    colnames(data)[2] <- "AmplitudeFile"
-    amplitude.files <- list.files(path = path, pattern = "_Amplitude.csv")
-    data <- data[data$AmplitudeFile %in% amplitude.files,]
-    
+    colnames(data) <- c("Well","AmplitudeFile","Experiment","Sample","TargetType","Target","Status","Concentration","Supermix")
     wells <- unique(data$Well)
-    
+    data$ExptType <-  paste(experiment, "_", data$Well, "_Amplitude.csv", sep = "")
+    amplitude.files <- list.files(path = path, pattern = "_Amplitude.csv")
+    data[,2] <- amplitude.files
     design <- matrix(data = "", nrow = length(wells), ncol = 4)
     colnames(design) <- c("Name", "File", "Type", "Probe")
-    
     for(well in 1:length(wells)) {
       temp <- data[data$Well %in% wells[well],]
       sampleName <- unique(temp$Sample)
@@ -36,15 +30,7 @@ createDesign <- function(path, verbose = TRUE){
   } else  {
     if(verbose == TRUE){
       cat("Experiment setup has not been located. Basic experiment design file will be made.\n")
-      }
-    amplitude.files <- list.files(path = path, pattern = "_Amplitude.csv")
-    sample.names <- gsub(pattern = "_Amplitude.csv", x = amplitude.files, replacement = "")
-    design <- matrix(data = "", nrow = length(amplitude.files), ncol = 4)
-    colnames(design) <- c("Name", "File", "Type", "Probe")
-    design[,1] <- sample.names
-    design[,2] <- amplitude.files
-    design[,3] <- c("pos", (rep("sample", length(amplitude.files)-2)), "neg")
-    design[,4] <- "probe"
+    }
   }
   output.file <- file.path(path, "design.txt")
   write.table(file = output.file, x = design, quote = FALSE, sep = "\t", row.names = FALSE)
