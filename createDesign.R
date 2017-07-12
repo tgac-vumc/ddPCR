@@ -6,8 +6,20 @@ createDesign <- function(path, verbose = TRUE){
   if(file.exists(file.path(path, experiment.file)) == TRUE){
     if(verbose == TRUE){
       cat("Experiment setup has been located.\n")
-      }
+    }
     data <- read.table(file = file.path(path, experiment.file), header = TRUE, sep = ",", check.names = FALSE, row.names = NULL, fill = TRUE)
+    if(ncol(data) == 1){
+      if(verbose == TRUE){
+        cat("File is not separated by ',' \nChecking alternative.....")
+      }
+      data <- read.table(file = file.path(path, experiment.file), header = TRUE, sep = ";", check.names = FALSE, row.names = NULL, fill = TRUE)
+      if(ncol(data) == 1){
+                          stop("Data is not provided in the correct format.\n")
+      }
+      if(verbose == TRUE){
+        cat("     Alternative accepted.\n")
+      }
+    }
     data <- data.frame(data[,1:9])
     colnames(data) <- c("Well","AmplitudeFile","Experiment","Sample","TargetType","Target","Status","Concentration","Supermix")
     wells <- unique(data$Well)
@@ -30,6 +42,13 @@ createDesign <- function(path, verbose = TRUE){
   } else  {
     if(verbose == TRUE){
       cat("Experiment setup has not been located. Basic experiment design file will be made.\n")
+      amplitude.files <- list.files(path = path, pattern = "_Amplitude.csv") 
+      design <- matrix(data = "", nrow = length(amplitude.files), ncol = 4)
+      colnames(design) <- c("Name", "File", "Type", "Probe")
+      design[,1] <- amplitude.files
+      design[,2] <- amplitude.files
+      design[,3] <- "sample"
+      design[,4] <- "Unknown"
     }
   }
   output.file <- file.path(path, "design.txt")
