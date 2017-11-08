@@ -1,8 +1,8 @@
 createDesign <- function(path, verbose = TRUE){ 
   if(file.exists(file.path(path, "design.txt")) == FALSE) {
-  experiment <- list.files(path, pattern = "Amplitude.csv", full.names = FALSE)[1]
-  experiment <- strsplit(x = experiment, split = "_")[[1]][1]
-  experiment.file <- paste(experiment, ".csv", sep = "")
+    experiment <- list.files(path, pattern = "Amplitude.csv", full.names = FALSE)[1]
+    experiment <- mgsub(x = experiment, pattern = paste("_", getPlateWells(),"_Amplitude.csv", sep = ""), replacement = rep(x = "", 96))
+    experiment.file <- paste(experiment, ".csv", sep = "")
   if(file.exists(file.path(path, experiment.file)) == TRUE){
     if(verbose == TRUE){
       cat("Experiment setup has been located.\n")

@@ -83,7 +83,23 @@ getThresholdDensity <- function(path = NULL, design = NULL, tData = NULL, breaks
   }
   return(tData)
 } 
-getThresholds <- function(x, algorithm = "hist", rm.outliers = TRUE, tData = NULL, verbose = FALSE){ 
+getThresholdDensityHist <- function(x, breaks = 100){
+  hist.data <- hist(x, breaks = breaks, plot = FALSE)
+  x <- hist.data$counts
+  result <- NULL
+  for(i in 1:(length(x)-5)){
+    if(x[i+1] > x[i+2] & x[i+2] > x[i+3] &
+       x[i+3] < x[i+4]
+    ) {
+      result <- c(result, i+3)
+    }
+  }
+  result <- result[1]
+  results <- hist.data$mids[result]
+  return(results)
+}
+
+getThresholds <- function(x, algorithm = "densityhist", rm.outliers = TRUE, tData = NULL, verbose = FALSE){ 
   if(rm.outliers == TRUE)
   {
     if("minOutlier" %in% row.names(tData) == TRUE) 
@@ -117,6 +133,13 @@ getThresholds <- function(x, algorithm = "hist", rm.outliers = TRUE, tData = NUL
       cat("Setting threshold based on 'kmeans'.\n")
     }
     result <- c(getThresholdRanges(x = x[,1]), getThresholdRanges(x = x[,2]))
+  }
+  if(tolower(algorithm) == "densityhist")
+  {
+    if(verbose == TRUE){
+      cat("Setting threshold based on 'densityhist'.\n")
+    }
+    result <- c(getThresholdDensityHist(x = x[,1]), getThresholdDensityHist(x = x[,2]))
   }
   
   result <- thresholdData(tData = tData, amplitude = result, type = 'threshold')
