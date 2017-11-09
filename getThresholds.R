@@ -89,7 +89,7 @@ getThresholdDensityHist <- function(x, breaks = 100){
   result <- NULL
   for(i in 1:(length(x)-5)){
     if(x[i+1] > x[i+2] & x[i+2] > x[i+3] &
-       x[i+3] < x[i+4]
+       x[i+3] <= x[i+4]
     ) {
       result <- c(result, i+3)
     }
