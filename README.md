@@ -1,6 +1,6 @@
 # README file for ddPCR
 # 
-# 201607, HFvanEssen
+# 201711, HFvanEssen
 
 Use ddPCR QuantaSoft software to export raw Amplitude data
 - 'Export Amplitude and Cluster Data' in options 
