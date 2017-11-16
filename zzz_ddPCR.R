@@ -7,6 +7,7 @@ checkPackages <- function(x){
   }
 }
 # PACKAGES
-checkPackages(c("dplyr", "magrittr", "xlsx"))
+checkPackages(c("xlsx"))
 
 # end, HF van Essen 2016
+cat("\n\nFunctions and packages have been loaded correctly.\n\n")
