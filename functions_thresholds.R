@@ -1,3 +1,22 @@
+combineSamples <- function(path, files, verbose = FALSE){
+  combined.data <- NULL
+  if(verbose == TRUE){
+    cat("Reading Amplitude files.\n")
+  }
+  for(i in 1:length(files))
+  { 
+    nrlines <- NULL
+    file.name <- file.path(path, files[i])
+    if(length(count.fields(file.name)) > 0){
+      sample.data <- read.table(file=file.name, header = TRUE, sep = ",")
+      combined.data <- rbind(combined.data, sample.data )
+    }
+  }
+  if(verbose == TRUE){
+    cat("Amplitude files are combined.\n")
+  }
+  return(combined.data)
+}
 .makeBreaks <- function(min, max, breaks = 10){
   # not working with hist
   amplitude <- max - min
@@ -12,41 +31,41 @@
   return(result)
 }
 maxAmplitude <- function(data, tData = NULL){
-  result <- c(max(x[,1]), max(x[,2]))
+  result <- c(max(data[,1]), max(data[,2]))
   result <- thresholdData(tData = tData, amplitude = result, type = 'maxAmplitude')
   return(result)
 }
 minAmplitude <- function(data, tData = NULL){
-  result <- c(min(x[,1]), min(x[,2]))
+  result <- c(min(data[,1]), min(data[,2]))
   result <- thresholdData(tData = tData, amplitude = result, type = 'minAmplitude')
   return(result)
 }
 meanCluster <- function(data, cluster = 1, channel = 1){
-  result <- mean(x[x$Cluster %in% cluster,channel])
+  result <- mean(data[x$Cluster %in% cluster,channel])
   if(as.character(result) == "NaN"){result <- 0}
   return(result)
 }
 meanSdCluster <- function(data, cluster = 1, stdev = 1){
   if(cluster != 9){
-    x <- x[x[,3] == cluster, ]
+    data <- data[data[,3] == cluster, ]
   }
-  results <- c(mean(x[,1]), mean(x[,2]))
-  results <- rbind(results, c((sd(x[,1])*stdev), (sd(x[,2]) * stdev)))
+  results <- c(mean(data[,1]), mean(data[,2]))
+  results <- rbind(results, c((sd(data[,1])*stdev), (sd(data[,2]) * stdev)))
   colnames(results) <- c("Ch1","Ch2")
   rownames(results) <- c("mean", paste(stdev, "_sd", sep=""))
   return(results)
 }
-removeOutliers <- function(data, cutoff = 5){
-  percentage <- round((nrow(x)/100) * (cutoff/2))
-  selection <- c(1:percentage, (nrow(x)-percentage):nrow(x))
-  selection <- !(1:nrow(x)  %in% selection)
-  x <- x[order(x[,1]),]
-  x <- x[selection,]
-  selection <- c(1:percentage, (nrow(x)-percentage):nrow(x))
-  selection <- !(1:nrow(x)  %in% selection)
-  x <- x[order(x[,2]),]
-  x <- x[selection,]
-  return(x)
+removeOutliers <- function(data, percentage = 1){
+  percentage <- round((nrow(data)/100) * (percentage/2))
+  selection <- c(1:percentage, (nrow(data)-percentage):nrow(data))
+  selection <- !(1:nrow(data)  %in% selection)
+  data <- data[order(data[,1]),]
+  data <- data[selection,]
+  selection <- c(1:percentage, (nrow(data)-percentage):nrow(data))
+  selection <- !(1:nrow(data)  %in% selection)
+  data <- data[order(data[,2]),]
+  data <- data[selection,]
+  return(data)
 }
 .thresholdHist <- function(x){
   x <- as.numeric(x)
@@ -56,7 +75,7 @@ removeOutliers <- function(data, cutoff = 5){
   result <- mean(hist.data[1, hist.data[2,] == min(hist.data[2,])])
   return(result)
 }
-.thresholdKmeans <- function(x, nClusters = 2){
+.thresholdKmeans2 <- function(x, nClusters = 2){
   x <- as.numeric(x)
   result <- NULL
   threshold <- kmeans(x = x, centers = nClusters)$centers
@@ -69,13 +88,11 @@ removeOutliers <- function(data, cutoff = 5){
   result <- (max(x) - min(x)) / 2
   return(result)
 }
-.thresholdsKmeans <- function(x, rm.outliers = TRUE){
-  if(rm.outliers == TRUE)
-  {
-    x <- x[!x[,3] == 0,]
-  }
+.thresholdKmeans4 <- function(x){
+  # function is not optimized yet
   results <- kmeans(x[,1:2], 4)
-  return(results)
+  
+  return(results$centers)
 }
 .thresholdDensity <- function(path = NULL, design = NULL, tData = NULL, breaks = 100, verbose = TRUE){
   if(is.null(design) == TRUE){
@@ -137,46 +154,54 @@ setThresholdsManual <- function(ch1 = NULL, ch2 = NULL, tData = NULL, verbose = 
 }
 
 setThresholds <- function(data, algorithm = "densityhist", rm.outliers = TRUE, tData = NULL, verbose = FALSE){ 
-  if(rm.outliers == TRUE)
-  {
+  if(rm.outliers == TRUE){
     if("minOutlier" %in% row.names(tData) == TRUE) 
       { # min outliers
-      x <- x[x[,1] > tData[row.names(tData) %in% "minOutlier", 1], ]
-      x <- x[x[,2] > tData[row.names(tData) %in% "minOutlier", 2], ]
+      data <- data[data[,1] > tData[row.names(tData) %in% "minOutlier", 1], ]
+      data <- data[data[,2] > tData[row.names(tData) %in% "minOutlier", 2], ]
+      if(verbose == TRUE){
+        cat("\nMin outliers are removed from the data before setting thresholds.\n")
+      }
     }
     if("maxOutlier" %in% row.names(tData) == TRUE) 
     { # max outliers
-      x <- x[x[,1] < tData[row.names(tData) %in% "maxOutlier", 1], ]
-      x <- x[x[,2] < tData[row.names(tData) %in% "maxOutlier", 2], ]
+      data <- data[data[,1] < tData[row.names(tData) %in% "maxOutlier", 1], ]
+      data <- data[data[,2] < tData[row.names(tData) %in% "maxOutlier", 2], ]
+      if(verbose == TRUE){
+        cat("Max outliers are removed from the data before setting thresholds.\n")
+      }
     }
   }
-  if(tolower(algorithm) == "hist" | tolower(algorithm) == "histogram")
-  {
+  if(tolower(algorithm) == "hist" | tolower(algorithm) == "histogram"){
     if(verbose == TRUE){
-      cat("Setting threshold based on 'histogram'.\n")
+      cat("\nSetting threshold based on 'histogram'.\n")
     }
-    result <- c(.thresholdHist(x = x[,1]), .thresholdHist(x = x[,2]))
+    result <- c(.thresholdHist(x = data[,1]), .thresholdHist(x = data[,2]))
   }
-  if(tolower(algorithm) == "ranges")
-  {
+  if(tolower(algorithm) == "ranges"){
     if(verbose == TRUE){
-      cat("Setting threshold based on 'ranges'.\n")
+      cat("\nSetting threshold based on 'ranges'.\n")
     }
-    result <- c(.thresholdRanges(x = x[,1]), .thresholdRanges(x = x[,2]))
+    result <- c(.thresholdRanges(x = data[,1]), .thresholdRanges(x = data[,2]))
   }
-  if(tolower(algorithm) == "kmeans")
-  {
+  if(tolower(algorithm) == "kmeans2"){
     if(verbose == TRUE){
-      cat("Setting threshold based on 'kmeans'.\n")
+      cat("\nSetting threshold based on 'kmeans' with 2 clusters per channel.\n")
     }
-    result <- c(.thresholdRanges(x = x[,1]), .thresholdRanges(x = x[,2]))
+    result <- c(.thresholdKmeans2(x = data[,1]), .thresholdKmeans2(x = data[,2]))
   }
-  if(tolower(algorithm) == "densityhist")
-  {
+  if(tolower(algorithm) == "kmeans4"){
     if(verbose == TRUE){
-      cat("Setting threshold based on 'densityhist'.\n")
+      cat("\nSetting threshold based on 'kmeans' with 4 clusters for both channels.\n '1/3' of amplitude of Highest cluster will be set as threshold.\n")
     }
-    result <- c(.thresholdDensityHist(x = x[,1]), .thresholdDensityHist(x = x[,2]))
+    result <- .thresholdKmeans4(x = data)$centers
+    result <- c(max(result[,1])/3, max(result[,2]/3))
+  }
+  if(tolower(algorithm) == "densityhist"){
+    if(verbose == TRUE){
+      cat("\nSetting threshold based on 'densityhist'.\n")
+    }
+    result <- c(.thresholdDensityHist(x = data[,1]), .thresholdDensityHist(x = data[,2]))
   }
   
   result <- thresholdData(tData = tData, amplitude = result, type = 'threshold')
@@ -191,9 +216,9 @@ refineThresholdStDev <- function(data, stdev = 3, tData = NULL, verbose = FALSE)
     }else{
       stop("Threshold data is not given.\n")
       }
-    cluster1 <- colSums(calculateMeanSdCluster(x, cluster = 1, stdev = stdev))
-    cluster2 <- colSums(calculateMeanSdCluster(x, cluster = 2, stdev = stdev))
-    cluster4 <- colSums(calculateMeanSdCluster(x, cluster = 4, stdev = stdev))
+    cluster1 <- colSums(meanSdCluster(data, cluster = 1, stdev = stdev))
+    cluster2 <- colSums(meanSdCluster(data, cluster = 2, stdev = stdev))
+    cluster4 <- colSums(meanSdCluster(data, cluster = 4, stdev = stdev))
     
     refined.channel1 <- max(c(cluster1[1], cluster4[1]), na.rm = TRUE)
     refined.channel2 <- max(c(cluster1[2], cluster2[2]), na.rm = TRUE)
@@ -220,7 +245,7 @@ refineThresholdStDev <- function(data, stdev = 3, tData = NULL, verbose = FALSE)
         cat("threshold for channel 2 could not be defined further.\n")
         }
     }
-    result <- thresholdData(tData = tData, amplitude = threshold, type = 'thresholdMeanStDev')
+    result <- thresholdData(tData = tData, amplitude = threshold, type = 'threshold')
     return(result)
     
   }else{stop("Threshold data is not given as a matrix.\n")}

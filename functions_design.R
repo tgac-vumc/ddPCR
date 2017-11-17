@@ -14,7 +14,7 @@ getNegatives <- function(design = NULL, verbose = TRUE){
 createDesign <- function(path, verbose = TRUE){ 
   if(file.exists(file.path(path, "design.txt")) == FALSE) {
     experiment <- list.files(path, pattern = "Amplitude.csv", full.names = FALSE)[1]
-    experiment <- mgsub(x = experiment, pattern = paste("_", getPlateWells(),"_Amplitude.csv", sep = ""), replacement = rep(x = "", 96))
+    experiment <- .mgsub(x = experiment, pattern = paste("_", .getPlateWells(),"_Amplitude.csv", sep = ""), replacement = rep(x = "", 96))
     experiment.file <- paste(experiment, ".csv", sep = "")
   if(file.exists(file.path(path, experiment.file)) == TRUE){
     if(verbose == TRUE){
@@ -90,7 +90,7 @@ getTargets <- function(path){ # will use .csv file of the experiment located in 
     }
   } else { break 
   }
-  targets <- unique(mgsub(pattern = c("_WT", "_wt", " wt", " WT"), replacement = c("", "", "", ""), x = data$Target))
+  targets <- unique(.mgsub(pattern = c("_WT", "_wt", " wt", " WT"), replacement = c("", "", "", ""), x = data$Target))
   result <- list()
   for(i in 1:length(targets))
   {
@@ -130,7 +130,7 @@ createTargetFolders <- function(x, path = NULL){ # x = output of get.targets(). 
 }
 .findWell <- function(input.file){
   x <- strsplit(as.character(input.file), split = "_")[[1]]
-  x <- x[x %in% getPlateWells()]
+  x <- x[x %in% .getPlateWells()]
   return(x)
 }
 .getPlateWells <- function(prefix=NULL, suffix=NULL){

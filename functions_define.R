@@ -1,4 +1,4 @@
-.defineClusters <- function(data, tData = NULL, outlier = TRUE, rain = TRUE){
+defineClusters <- function(data, tData = NULL, outlier = TRUE, rain = TRUE){
   if (class(tData) == "matrix") 
     {
     if("threshold" %in% row.names(tData) == TRUE)
@@ -10,23 +10,23 @@
       threshold <- tData[row.names(tData) %in% "thresholdMeanStDev",]
     }
     
-    results <- rep(NA, dim(x)[1])
-    results[x[,1] < threshold[1] & x[,2] < threshold[2]] <- 1 # ch1-ch2- : cluster 1
-    results[x[,1] > threshold[1] & x[,2] < threshold[2]] <- 2 # ch1+ch2- : cluster 2
-    results[x[,1] > threshold[1] & x[,2] > threshold[2]] <- 3 # ch1+ch2+ : cluster 3
-    results[x[,1] < threshold[1] & x[,2] > threshold[2]] <- 4 # ch1-ch2+ : cluster 4
+    results <- rep(NA, dim(data)[1])
+    results[data[,1] < threshold[1] & data[,2] < threshold[2]] <- 1 # ch1-ch2- : cluster 1
+    results[data[,1] > threshold[1] & data[,2] < threshold[2]] <- 2 # ch1+ch2- : cluster 2
+    results[data[,1] > threshold[1] & data[,2] > threshold[2]] <- 3 # ch1+ch2+ : cluster 3
+    results[data[,1] < threshold[1] & data[,2] > threshold[2]] <- 4 # ch1-ch2+ : cluster 4
     if (outlier == TRUE){
       if("minOutlier" %in% row.names(tData) == TRUE)
       {
         minOutlier <- tData[row.names(tData) %in% "minOutlier",]
-        results[x[,1] < minOutlier[1] & x[,2] < threshold[2]] <- 0 
-        results[x[,2] < minOutlier[2] & x[,1] < threshold[1]] <- 0 # minOutlier : cluster 0
+        results[data[,1] < minOutlier[1] & data[,2] < threshold[2]] <- 0 
+        results[data[,2] < minOutlier[2] & data[,1] < threshold[1]] <- 0 # minOutlier : cluster 0
       }
       if("maxOutlier" %in% row.names(tData) == TRUE)
       {
         maxOutlier <- tData[row.names(tData) %in% "maxOutlier",]
-        results[x[,1] > maxOutlier[1]] <- 0
-        results[x[,2] > maxOutlier[2]] <- 0 # maxOutlier : cluster 0
+        results[data[,1] > maxOutlier[1]] <- 0
+        results[data[,2] > maxOutlier[2]] <- 0 # maxOutlier : cluster 0
       }
     }
     if (rain == TRUE){
@@ -34,14 +34,14 @@
       {
         minRain <- tData[row.names(tData) %in% "minRain",]
         maxRain <- tData[row.names(tData) %in% "maxRain",]
-        results[x[,1] > minRain[1] & x[,1] < maxRain[1] & (results == 1 | results == 2) ] <- 5 # Rain ch1 : cluster 5
-        results[x[,2] > minRain[2] & x[,2] < maxRain[2] & (results == 1 | results == 4) ] <- 5 # Rain ch2 : cluster 5
+        results[data[,1] > minRain[1] & data[,1] < maxRain[1] & (results == 1 | results == 2) ] <- 5 # Rain ch1 : cluster 5
+        results[data[,2] > minRain[2] & data[,2] < maxRain[2] & (results == 1 | results == 4) ] <- 5 # Rain ch2 : cluster 5
       }
     }
 
-    x[,3] <- results
+    data[,3] <- results
     }else{stop("Threshold data is not given as a matrix.\n")}
-  return(x)
+  return(data)
 }
 .defineColor <- function(x, density = NULL){
   result <- rep(NA, length(x))
@@ -58,7 +58,7 @@
   return(result)
 }
 defineMinOutliers <- function(data, tData = NULL){
-  channel1 <- as.numeric(x[,1])
+  channel1 <- as.numeric(data[,1])
   hist.data <- hist(channel1, breaks=300, plot=FALSE)
   firstBigClusterCh1 <- grep(pattern = max(hist.data$counts), x = hist.data$counts)
   if(TRUE %in% (hist.data$counts[1:firstBigClusterCh1] %in% 0 == TRUE))
@@ -69,7 +69,7 @@ defineMinOutliers <- function(data, tData = NULL){
   if(minOutlierCh1 < 0){ minOutlierCh1 <- 0 }
   }
   
-  channel2 <- as.numeric(x[,2])
+  channel2 <- as.numeric(data[,2])
   hist.data <- hist(channel2, breaks=300, plot=FALSE)
   firstBigClusterCh2 <- grep(pattern = max(hist.data$counts), x = hist.data$counts)
   if(TRUE %in% (hist.data$counts[1:firstBigClusterCh2] %in% 0 == TRUE))
