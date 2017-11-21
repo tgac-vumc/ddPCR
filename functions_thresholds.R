@@ -41,7 +41,7 @@ minAmplitude <- function(data, tData = NULL){
   return(result)
 }
 meanCluster <- function(data, cluster = 1, channel = 1){
-  result <- mean(data[x$Cluster %in% cluster,channel])
+  result <- mean(data[$Cluster %in% cluster,channel])
   if(as.character(result) == "NaN"){result <- 0}
   return(result)
 }
