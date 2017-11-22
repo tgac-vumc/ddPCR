@@ -1,14 +1,29 @@
-plot.ddPCR <- function(data = NULL, well = NULL, dotres = 0.7, density = 60, pch = 16, bg = "lightgrey", main = "ddPCR", verbose = FALSE, test = FALSE){
+plot.ddPCR <- function(data = NULL, well = NULL, dotres = 0.7, density = 60, pch = 16, bg = "#e6e6e6", main = "ddPCR", verbose = FALSE, test = FALSE){
   if((class(data)[1] == "ddPCRdata") != TRUE){
     stop ("data structure is not in the correct format.\n")
   } 
   if(is.null(well) == TRUE){
     cat("No well location was given to plot.\n")
-  } else {
-    sample <- match(tolower(well), table = tolower(data@experimentData$Sample.Well))
+  } else if (class(well) == "character"){
+    sample <- match(tolower(well), table = tolower(data@phenoData$sampleData['well',]))
     if(is.na(sample) == TRUE){
-      cat("No correct sample well has been given.\n")
-    } else if(test == FALSE){
+        cat("No correct sample well has been given.\n")
+    } 
+  } else if(class(well) == "numeric"){
+      if((well > ncol(data@phenoData$sampleData)) == TRUE){
+        cat("No correct sample well has been given.\n")
+      }else {
+        sample <- well
+      }
+  } 
+  if(class(density) == "numeric"){
+    if(density > 0 | density < 100){
+      data <- .updateColors(data = data, density = density)
+    }
+  }
+
+  cat("working on sample: ", data@phenoData$sampleData['name',sample], "\n")
+   if(test != TRUE){
       
       data <- .updateColors(data = data, density = density)
       
@@ -19,19 +34,19 @@ plot.ddPCR <- function(data = NULL, well = NULL, dotres = 0.7, density = 60, pch
            xlab = "Ch2 Amplitude", 
            ylab = "Ch1 Amplitude",
            pch = pch, 
-           main = toupper(well),
-           xlim = c(0, max(data@phenoData$ch2[, "maxAmplitude"])), 
-           ylim = c(0, max(data@phenoData$ch1[, "maxAmplitude"])))
+           main = data@phenoData$sampleData['name',sample],
+           xlim = c(0, max(data@phenoData$ch2['maxAmplitude', ])), 
+           ylim = c(0, max(data@phenoData$ch1['maxAmplitude', ])))
       sub.text <- .dropletCountText(x = data@assayData$Cluster[,sample])
       mtext(side = 3, text = sub.text, cex = 0.8)
-    } else {
+    } else if (test == TRUE) {
       par(bg = bg)
       plot(0, bty='n', col = bg,
            ylab = "Ch1 Amplitude",
            xlab = "Ch2 Amplitude",
-           xlim = c(0, max(data@phenoData$ch2[, "maxAmplitude"])), 
-           ylim = c(0, max(data@phenoData$ch1[, "maxAmplitude"])),
-           main = toupper(well)
+           xlim = c(0, max(data@phenoData$ch2['maxAmplitude', ])), 
+           ylim = c(0, max(data@phenoData$ch1['maxAmplitude', ])),
+           main = data@phenoData$sampleData['name',sample]
            )
     
       # FOR GRID LINES
@@ -47,4 +62,3 @@ plot.ddPCR <- function(data = NULL, well = NULL, dotres = 0.7, density = 60, pch
       )
     }
   }
-}
