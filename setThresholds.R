@@ -157,6 +157,7 @@ setThresholds <- function(data = NULL, algorithm = "densityhist",
       data@phenoData$ch2['threshold', selection] <- result[2]
     }
   }
+  data <- .updateClusters(data) 
   return(data)
 }
 setThresholdsWell <- function(data = NULL, well = NULL, algorithm = "densityhist", 
@@ -184,6 +185,7 @@ setThresholdsWell <- function(data = NULL, well = NULL, algorithm = "densityhist
                                      verbose = verbose)
     data@phenoData$ch1['threshold', selection] <- result[1]
     data@phenoData$ch2['threshold', selection] <- result[2]
+    data <- .updateClusters(data)
     return(data)
 }
 

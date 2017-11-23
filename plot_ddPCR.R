@@ -29,6 +29,11 @@ plot.ddPCR <- function(data = NULL, well = NULL, dotres = 0.7,
     }
   }
 
+  ### get highest threshold from match with sample
+  selection.probe <-  data@phenoData$sampleData['probe',] %in% data@phenoData$sampleData['probe',sample]
+  max.ch1 <- max(data@phenoData$ch1['maxAmplitude', selection.probe])
+  max.ch2 <- max(data@phenoData$ch2['maxAmplitude', selection.probe])
+  
   cat("working on sample: ", data@phenoData$sampleData['name',sample], "\n")
    if(new != TRUE){
       data <- .updateColors(data = data, density = density)
@@ -41,8 +46,8 @@ plot.ddPCR <- function(data = NULL, well = NULL, dotres = 0.7,
            ylab = "Ch1 Amplitude",
            pch = pch, 
            main = data@phenoData$sampleData['name', sample],
-           xlim = c(0, max(data@phenoData$ch2['maxAmplitude', sample])), 
-           ylim = c(0, max(data@phenoData$ch1['maxAmplitude', sample])))
+           xlim = c(0, max.ch2), 
+           ylim = c(0, max.ch1))
       sub.text <- .dropletCountText(x = data@assayData$Cluster[,sample])
       mtext(side = 3, text = sub.text, cex = 0.8)
       
@@ -57,8 +62,8 @@ plot.ddPCR <- function(data = NULL, well = NULL, dotres = 0.7,
       plot(0, bty='n', col = bg,
            ylab = "Ch1 Amplitude",
            xlab = "Ch2 Amplitude",
-           xlim = c(0, max(data@phenoData$ch2['maxAmplitude', ])), 
-           ylim = c(0, max(data@phenoData$ch1['maxAmplitude', ])),
+           xlim = c(0, max.ch2), 
+           ylim = c(0, max.ch1),
            main = data@phenoData$sampleData['name',sample]
            )
     
