@@ -17,7 +17,7 @@
 }
 .readExperiment <- function(file = NULL, verbose = TRUE){
   path <- .getPath(file)
-  experiment <- unique(getExperiment(basename(file)))
+  experiment <- unique(.getExperiment(basename(file)))
   experiment.file <- paste0(experiment, ".csv")
   if(file.exists(file.path(path,experiment.file)) == TRUE){
     if(verbose == TRUE){
@@ -71,4 +71,3 @@
     
     return(design)
 }
-
