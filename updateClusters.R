@@ -1,4 +1,4 @@
-.updateClusters <- function(data){
+.updateClusters <- function(data = NULL){
   if((class(data)[1] == "ddPCRdata") != TRUE){
     stop ("data structure is not in the correct format.\n\n")
   } 
