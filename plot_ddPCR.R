@@ -59,13 +59,17 @@ plot.ddPCR <- function(data = NULL, well = NULL, dotres = 0.7,
       }
     } else if (new == TRUE) {
       par(bg = bg)
+      main.text <- paste(data@phenoData$sampleData['name',sample],":",
+                         data@phenoData$sampleData['probe',sample])
       plot(0, bty='n', col = bg,
            ylab = "Ch1 Amplitude",
            xlab = "Ch2 Amplitude",
            xlim = c(0, max.ch2), 
            ylim = c(0, max.ch1),
-           main = data@phenoData$sampleData['name',sample]
+           main = main.text
            )
+      sub.text <- .dropletCountText(x = data@assayData$Cluster[,sample])
+      mtext(side = 3, text = sub.text, cex = 0.6)
     
       # FOR GRID LINES
       line500 <- c(-500,0, cumsum(rep(500,50)))
