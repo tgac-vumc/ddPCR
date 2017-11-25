@@ -8,17 +8,27 @@ overview <- function(data){
   for (i in 1:length(probes)){
     selection <- data@phenoData$sampleData['probe', ] %in% probes[i]
     cat("Probe ",i ,": " , probes[i], "\n", sep ="")
+    
+    rownames <- c(1:nSamples)[selection]
     samples <- data@phenoData$sampleData['name', selection ]
     wells <- data@phenoData$sampleData['well', selection ]
-    threshold.ch1 <- data@phenoData$ch1['threshold', selection ]
-    threshold.ch2 <- data@phenoData$ch2['threshold', selection ]
-    results <- matrix(NA, nrow = length(samples), ncol = 4,
-                      dimnames = list(c(1:length(samples)),c("Name", "Well", 
-                                                             "Threshold.ch1", "Threshold.ch2")))
+    threshold.ch1 <- round(data@phenoData$ch1['threshold', selection])
+    threshold.ch2 <- round(data@phenoData$ch2['threshold', selection])
+    minOutlier.ch1 <- round(data@phenoData$ch1['minOutlier', selection])
+    minOutlier.ch2 <- round(data@phenoData$ch2['minOutlier', selection])
+    
+    results <- matrix(NA, nrow = length(samples), ncol = 6,
+                      dimnames = list(rownames,c("Name", "Well", 
+                                                  "Threshold.ch1", 
+                                                  "Threshold.ch2",
+                                                 "minOutlier.ch1",
+                                                 "minOutlier.ch2")))
     results[,'Name'] <- samples
     results[,'Well'] <- wells
     results[,'Threshold.ch1'] <- threshold.ch1
     results[,'Threshold.ch2'] <- threshold.ch2
+    results[,'minOutlier.ch1'] <- minOutlier.ch1
+    results[,'minOutlier.ch2'] <- minOutlier.ch2
     print(results)
     cat("\n")
   }

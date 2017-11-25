@@ -1,4 +1,9 @@
-minOutliers <- function(data = NULL, breaks = 300, strict = TRUE){
+minOutliers <- function(data = NULL, breaks = 250, strict = TRUE){
+  answer <- readline(prompt <- "function is not working correctly. Type 'YES' to continue : ")
+  if(tolower(answer) == "y" | tolower(answer) == "yes" ){
+    cat("Ignoring warning..\n")
+  } else (stop("stopped manually.\n"))
+
   if((class(data)[1] == "ddPCRdata") != TRUE){
     stop ("data structure is not in the correct format.\n\n")
   }
