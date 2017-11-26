@@ -32,8 +32,6 @@
       results <- data@assayData$Cluster[, i]
       selection <- x[,1] < minOutlier[1] & x[,2] < minOutlier[2]
       results[selection] <- 0 
-      #selection <- minOutlier[2] & x[,1] < threshold[1]
-      #results[selection] <- 0
     
       data@assayData$Cluster[, i] <- results
     }
@@ -48,6 +46,22 @@
       results <- data@assayData$Cluster[, i]
       results[x[,1] > maxOutlier[1]] <- 0
       results[x[,2] > maxOutlier[2]] <- 0 
+      
+      data@assayData$Cluster[, i] <- results
+    }
+    if(is.na(data@phenoData$ch1['minRain', i]) != TRUE){
+      ch1.rain <- c(minRain = data@phenoData$ch1['minRain', i],
+                    maxRain = data@phenoData$ch1['maxRain', i])
+      ch2.rain <- c(minRain = data@phenoData$ch2['minRain', i],
+                    maxRain = data@phenoData$ch2['maxRain', i])
+      
+      x <- cbind(channel.1 = data@assayData$Ch1.Amplitude[ ,i], 
+                 channel.2 = data@assayData$Ch2.Amplitude[ ,i])
+      
+      results <- data@assayData$Cluster[, i]
+      
+      results[x[,1] > ch1.rain[1] & x[,1] < ch1.rain[2]] <- 5 # rain : cluster 5
+      results[x[,2] > ch2.rain[1] & x[,2] < ch2.rain[2]] <- 5 # rain : cluster 5
       
       data@assayData$Cluster[, i] <- results
     }

@@ -1,5 +1,5 @@
 plot.ddPCR <- function(data = NULL, well = NULL, dotres = 0.7, 
-                       density = 60, pch = 16, bg = "#e6e6e6", 
+                       density = 60, pch = 16, bg = "#D3D3D3", 
                        main = "ddPCR", verbose = FALSE, new = FALSE){
   if((class(data)[1] == "ddPCRdata") != TRUE){
     stop ("data structure is not in the correct format.\n")

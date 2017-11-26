@@ -121,7 +121,6 @@
     result <- c(channel.1 = .thresholdDensityHist(x = ch1, breaks = breaks, strict = strict), 
                 channel.2 = .thresholdDensityHist(x = ch2, breaks = breaks, strict = strict))
   }
-  
  # result <- thresholdData(tData = tData, amplitude = result, type = 'threshold')
   return(result)
 }
@@ -161,8 +160,8 @@ setThresholds <- function(data = NULL, algorithm = "densityhist",
   return(data)
 }
 setThresholdsWell <- function(data = NULL, well = NULL, algorithm = "densityhist", 
-                          breaks = 20, strict = TRUE, 
-                          verbose = TRUE){ 
+                              breaks = 20, strict = TRUE, 
+                              verbose = TRUE){ 
   if((class(data)[1] == "ddPCRdata") != TRUE){
     stop ("data structure is not in the correct format.\n")
   }
@@ -188,4 +187,40 @@ setThresholdsWell <- function(data = NULL, well = NULL, algorithm = "densityhist
     data <- .updateClusters(data)
     return(data)
 }
+setThresholdsManual <- function(data = NULL, type = "probe",
+                                verbose = TRUE){ 
+  if((class(data)[1] == "ddPCRdata") != TRUE){
+    stop ("data structure is not in the correct format.\n")
+  }
+  if(tolower(type) == "all"){
+    channel.1 <- as.numeric(readline("Please enter numeric threshold value for channel 1: "))
+    if(is.numeric(channel.1) != TRUE){
+      stop("Threshold value has to be numeric. \n")
+    }
+    channel.2 <- as.numeric(readline("Please enter numeric threshold value for channel 2: "))
+    if(is.numeric(channel.2) != TRUE){
+      stop("Threshold value has to be numeric. \n")
+    }
 
+    data@phenoData$ch1['threshold',] <- channel.1
+    data@phenoData$ch2['threshold',] <- channel.2
+    
+  } else if(tolower(type) == "probe"){
+    probes <- unique(data@phenoData$sampleData['probe', ])
+    for(i in 1:length(probes)){
+      selection <- data@phenoData$sampleData['probe', ] %in% probes[i]
+      message("Data for probe '", probes[i], "' can be entered.")
+      cat("    type 'skip' if you do not wish to add a value for this probe.\n")
+      
+      channel.1 <- as.numeric(readline("Please enter numeric threshold value for channel 1: "))
+      channel.2 <- as.numeric(readline("Please enter numeric threshold value for channel 2: "))
+      if(is.numeric(channel.1) == TRUE & is.numeric(channel.2) == TRUE ){
+        data@phenoData$ch1['threshold', selection] <- channel.1
+        data@phenoData$ch2['threshold', selection] <- channel.2
+        cat("   Threshold values have be updated. \n\n")
+      }
+    }
+  }  
+  data <- .updateClusters(data) 
+  return(data)
+}

@@ -10,10 +10,10 @@
 # [x] add probe name to the plot
 # [x] update overview with correct sample locations as row names
 # [ ] add Cluster 1 mean to 'overview' function
-# [ ] fix bug 'minOutliers'
-# [ ] determine the best amount of breaks for densityhist -> works good >= 25
+# [x] fix bug 'minOutliers'
+# [x] determine the best amount of breaks for densityhist -> works good >= 25
 # [ ] integrate mean + 3sd
-# [ ] integrate 'outliers' package
+# [x] integrate 'outliers' package -> no (updated own outliers function)
 # [ ] setTreshold (manual) : adding number will show that probe
   # [ ] combine data per probe and plot
   # [ ] ask for threshold channel 1 & channel 2 with readline
