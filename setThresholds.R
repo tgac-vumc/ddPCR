@@ -71,6 +71,15 @@
   results <- hist.data$mids[result]
   return(results)
 }
+.thresholdmeanSd <- function(x, percentage = 25, stdev = 3){
+  x <- x[!(x %in% NA)]
+  absAmplitude <- abs(diff(c(min(x), max(x))))
+  percentageAmplitude <- (absAmplitude/100) * percentage
+  baseThreshold <- min(x) + percentageAmplitude
+  x <- x[x < baseThreshold]
+  result <- mean(x) + (stdev * sd(x))
+  return(result)
+}
 .determineThresholds <- function(ch1 = NULL, ch2 = NULL, 
                                  algorithm = NULL, 
                                  breaks = 100, strict = TRUE,
@@ -81,13 +90,6 @@
   if(is.null(algorithm) == TRUE){
     stop("algorithm has not been set to determine thresholds.\n")
   }
-  ### REMOVE OUTLIERS
-  if(verbose == TRUE){
-    cat("Removing outliers from the data.\n")
-  }
-  amplitudes <- .removeOutliers(ch1, ch2, percentage = 1)
-  ch1 <- amplitudes[,1]
-  ch2 <- amplitudes[,2]
   ### RUN ALGORITHM
   if(tolower(algorithm) == "hist" | tolower(algorithm) == "histogram")
   {
@@ -121,7 +123,14 @@
     result <- c(channel.1 = .thresholdDensityHist(x = ch1, breaks = breaks, strict = strict), 
                 channel.2 = .thresholdDensityHist(x = ch2, breaks = breaks, strict = strict))
   }
- # result <- thresholdData(tData = tData, amplitude = result, type = 'threshold')
+  if(tolower(algorithm) == "meansd")
+  {
+    if(verbose == TRUE){
+      cat("Setting threshold based on 'meanSd'.\n")
+    }
+    result <- c(channel.1 = .thresholdmeanSd(x = ch1), 
+                channel.2 = .thresholdmeanSd(x = ch2))
+  }
   return(result)
 }
 setThresholds <- function(data = NULL, algorithm = "densityhist", 

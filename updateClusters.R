@@ -23,8 +23,6 @@
       
       minOutlier <- c(channel.1 = data@phenoData$ch1['minOutlier', i],
                      channel.2 = data@phenoData$ch2['minOutlier', i])
-      threshold <- c(channel.1 = data@phenoData$ch1['threshold', i],
-                     channel.2 = data@phenoData$ch2['threshold', i])
       
       x <- cbind(channel.1 = data@assayData$Ch1.Amplitude[ ,i], 
                  channel.2 = data@assayData$Ch2.Amplitude[ ,i])

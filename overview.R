@@ -19,16 +19,16 @@ overview <- function(data){
     
     results <- matrix(NA, nrow = length(samples), ncol = 6,
                       dimnames = list(rownames,c("Name", "Well", 
-                                                  "Threshold.ch1", 
-                                                  "Threshold.ch2",
-                                                 "minOutlier.ch1",
-                                                 "minOutlier.ch2")))
+                                                  "Thresh.ch1", 
+                                                  "Thresh.ch2",
+                                                 "minOut.ch1",
+                                                 "minOut.ch2")))
     results[,'Name'] <- samples
     results[,'Well'] <- wells
-    results[,'Threshold.ch1'] <- threshold.ch1
-    results[,'Threshold.ch2'] <- threshold.ch2
-    results[,'minOutlier.ch1'] <- minOutlier.ch1
-    results[,'minOutlier.ch2'] <- minOutlier.ch2
+    results[,'Thresh.ch1'] <- threshold.ch1
+    results[,'Thresh.ch2'] <- threshold.ch2
+    results[,'minOut.ch1'] <- minOutlier.ch1
+    results[,'minOut.ch2'] <- minOutlier.ch2
     results <- data.frame(results)
     print(results)
     cat("\n")
