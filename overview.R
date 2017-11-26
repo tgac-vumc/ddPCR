@@ -7,7 +7,7 @@ overview <- function(data){
   cat("ddPCR structure has", nSamples, "samples with", length(probes), "probe(s).\n\n")
   for (i in 1:length(probes)){
     selection <- data@phenoData$sampleData['probe', ] %in% probes[i]
-    cat("Probe ",i ,": " , probes[i], "\n", sep ="")
+    message("Probe ",i, ": ") ; cat(probes[i], "\n\n", sep ="")
     
     rownames <- c(1:nSamples)[selection]
     samples <- data@phenoData$sampleData['name', selection ]
@@ -29,6 +29,7 @@ overview <- function(data){
     results[,'Threshold.ch2'] <- threshold.ch2
     results[,'minOutlier.ch1'] <- minOutlier.ch1
     results[,'minOutlier.ch2'] <- minOutlier.ch2
+    results <- data.frame(results)
     print(results)
     cat("\n")
   }

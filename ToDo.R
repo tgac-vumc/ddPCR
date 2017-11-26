@@ -14,6 +14,11 @@
 # [ ] determine the best amount of breaks for densityhist -> works good >= 25
 # [ ] integrate mean + 3sd
 # [ ] integrate 'outliers' package
+# [ ] setTreshold (manual) : adding number will show that probe
+  # [ ] combine data per probe and plot
+  # [ ] ask for threshold channel 1 & channel 2 with readline
+  # [ ] check if result > min amplitude and result < max amplitude
+
 
 
 ### idea new to remove outliers?

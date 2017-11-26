@@ -16,14 +16,27 @@ files <- list.files(path, pattern = "Amplitude.csv", full.names = TRUE)
 data <- readAmplitudeFiles(files)
 
 ### set a threshold for the samples. Current algorithms: 'histogram', 'kmean2', 'ranges', 'densityhist'
-### for algorithms with histogram 
+### for algorithms with histogram the number of breaks can be added and if they are to made scrict 
+### or not strict (strict = TRUE/FALSE)
+
 data <- setThresholds(data = data, algorithm = "densityhist", 
                         breaks = break.sizes[z], strict = TRUE, 
                         verbose = FALSE)
-data <- minOutliers(data)
+                        
+### After setting the threshold for each sample. The data can be plotted with the function below.
+### A new plot function is under development (new = TRUE)
+
 plot.ddPCR(data, well = i, new = TRUE)
 
-}
+### Standard ddpcr colors are used for plotting, but can be changed with changeColors and a string 
+### of 6 hex colors in this order
+  # cluster 0 : outlier
+  # cluster 1 : double negative
+  # cluster 2 : ch 1 negative, ch 2 positive
+  # cluster 3 : double positive
+  # cluster 4 : ch 1 postive, ch 2 negative
+  # cluster 5 : rain
+  
 - createDesign
 - loop through individual targets
 - combine all samples in each used probe

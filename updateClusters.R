@@ -30,10 +30,10 @@
                  channel.2 = data@assayData$Ch2.Amplitude[ ,i])
       
       results <- data@assayData$Cluster[, i]
-      selection <- x[,1] < minOutlier[1] & x[,2] < threshold[2]
+      selection <- x[,1] < minOutlier[1] & x[,2] < minOutlier[2]
       results[selection] <- 0 
-      selection <- minOutlier[2] & x[,1] < threshold[1]
-      results[selection] <- 0
+      #selection <- minOutlier[2] & x[,1] < threshold[1]
+      #results[selection] <- 0
     
       data@assayData$Cluster[, i] <- results
     }

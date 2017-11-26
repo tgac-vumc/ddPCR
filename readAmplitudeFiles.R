@@ -33,10 +33,10 @@ readAmplitudeFiles <- function(files =  NULL, nrows=25000, verbose=FALSE){
                       ncol =  length(sample.names),
                       dimnames = list(rowsPhenodata, well.locations))
   
-  Channel.Name <- c("Ch1.Amplitude" ,"Ch2.Amplitude") 
-  Cluster.Number <- c(1,2,3,4,0,5)
-  Cluster.Name <- c("ch1-ch2-", "ch1+ch2-", "ch1+ch2+", "ch1-ch+", "outlier", "rain")
-  Cluster.Color <- c("#000000", "#0000FF", "#FFA500", "#00FF00", "#FF0000", "#551A8B")
+  Channel.Name <- c("Ch1.Amplitude", "Ch2.Amplitude") 
+  Cluster.Number <- c(0, 1, 2, 3, 4, 5)
+  Cluster.Name <- c("outlier", "ch1-ch2-", "ch1+ch2-", "ch1+ch2+", "ch1-ch+", "rain")
+  Cluster.Color <- c("#FF0000", "#000000", "#0000FF", "#FFA500", "#00FF00", "#551A8B")
   
   ### loop through all the files ------
   for(i in 1:nFiles)
