@@ -1,6 +1,11 @@
-minOutliers <- function(data = NULL, well = NULL, breaks = 250, strict = TRUE){
+minOutliers <- function(data = NULL, well = NULL, 
+                        breaks = 250, strict = TRUE,
+                        verbose = TRUE){
     if((class(data)[1] == "ddPCRdata") != TRUE){
       stop ("data structure is not in the correct format.\n\n")
+    }
+    if(verbose == TRUE){
+      cat("Checking for outliers in each sample.\n")
     }
     if(is.null(well) == TRUE){
       wells <- 1:ncol(data@phenoData$sampleData)
@@ -9,7 +14,6 @@ minOutliers <- function(data = NULL, well = NULL, breaks = 250, strict = TRUE){
     }
     
   for(z in 1:length(wells)){
-    cat("processing sample", z, "\n")
     well <- wells[z]
     ### analyzing channel 1
     ch1 <- data@assayData$Ch1.Amplitude[ ,well]

@@ -1,6 +1,6 @@
 plot.ddPCR <- function(data = NULL, well = NULL, dotres = 0.7, 
                        density = 60, pch = 16, bg = "#D3D3D3", 
-                       main = "ddPCR", verbose = FALSE, new = FALSE){
+                       main = "ddPCR", verbose = TRUE, new = TRUE){
   if((class(data)[1] == "ddPCRdata") != TRUE){
     stop ("data structure is not in the correct format.\n")
   } 
@@ -34,7 +34,10 @@ plot.ddPCR <- function(data = NULL, well = NULL, dotres = 0.7,
   max.ch1 <- max(data@phenoData$ch1['maxAmplitude', selection.probe])
   max.ch2 <- max(data@phenoData$ch2['maxAmplitude', selection.probe])
   
-  cat("working on sample: ", data@phenoData$sampleData['name',sample], "\n")
+  if (verbose == TRUE){
+    cat("Plotting sample: ", data@phenoData$sampleData['name',sample], "\n")
+  }
+  
    if(new != TRUE){
       data <- .updateColors(data = data, density = density)
     

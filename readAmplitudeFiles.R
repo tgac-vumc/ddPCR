@@ -11,6 +11,9 @@ readAmplitudeFiles <- function(files =  NULL, nrows=25000, verbose=FALSE){
     well.locations <- .findWell(basename(files))
   }
   nFiles <- length(files)
+  if(verbose == TRUE){
+    cat("Found ", nFiles, " Amplitude.csv files to process.\n", sep="")
+    }
   
   ### CREATE BASE MATRIX FOR ALL DATA ------
   Ch1.Amplitude <- matrix(NA, nrow = nrows, ncol = nFiles, dimnames = list(c(1:nrows), c(well.locations)))
@@ -44,11 +47,10 @@ readAmplitudeFiles <- function(files =  NULL, nrows=25000, verbose=FALSE){
     if(file.exists(files[i]) == TRUE)
     {
       amplitude.data <- read.table(file = files[i], header = TRUE,sep = ",")
-      if(verbose == TRUE){ 
         if(dim(amplitude.data)[1] > nrows){
           cat("Too many rows in data file: '", basename(files[i]),"'\n", sep="")
           next
-        } else {cat("Reading amplitude data: '", basename(files[i]),"'\n", sep="")}
+        }
       }
       
       Total.Droplets <- nrow(amplitude.data)
@@ -66,7 +68,6 @@ readAmplitudeFiles <- function(files =  NULL, nrows=25000, verbose=FALSE){
       channel.2['minAmplitude', i] <- min(amplitude.data[,2])
       channel.2['maxAmplitude', i] <- max(amplitude.data[,2])
     }
-  }
   
   ### ADD SAMPLE.DATA TO STRUCTURE ------
   sample.data['well',] <- well.locations

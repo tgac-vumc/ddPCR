@@ -93,41 +93,26 @@
   ### RUN ALGORITHM
   if(tolower(algorithm) == "hist" | tolower(algorithm) == "histogram")
   {
-    if(verbose == TRUE){
-      cat("Setting threshold based on 'histogram'.\n")
-    }
     result <- c(channel.1 = .thresholdHist(x = ch1, breaks = breaks, strict = strict), 
                 channel.2 = .thresholdHist(x = ch2, breaks = breaks, strict = strict))
   }
   if(tolower(algorithm) == "ranges")
   {
-    if(verbose == TRUE){
-      cat("Setting threshold based on 'ranges'.\n")
-    }
     result <- c(channel.1 = .thresholdRanges(x = ch1),
                 channel.2 = .thresholdRanges(x = ch2))
   }
   if(tolower(algorithm) == "kmeans2")
   {
-    if(verbose == TRUE){
-      cat("Setting threshold based on 'kmeans'.\n")
-    }
     result <- c(channel.1 = .thresholdKmeans2(x = ch1), 
                 channel.2 = .thresholdKmeans2(x = ch2))
   }
   if(tolower(algorithm) == "densityhist")
   {
-    if(verbose == TRUE){
-      cat("Setting threshold based on 'densityhist'.\n")
-    }
     result <- c(channel.1 = .thresholdDensityHist(x = ch1, breaks = breaks, strict = strict), 
                 channel.2 = .thresholdDensityHist(x = ch2, breaks = breaks, strict = strict))
   }
   if(tolower(algorithm) == "meansd")
   {
-    if(verbose == TRUE){
-      cat("Setting threshold based on 'meanSd'.\n")
-    }
     result <- c(channel.1 = .thresholdmeanSd(x = ch1), 
                 channel.2 = .thresholdmeanSd(x = ch2))
   }
@@ -139,8 +124,11 @@ setThresholds <- function(data = NULL, algorithm = "densityhist",
   if((class(data)[1] == "ddPCRdata") != TRUE){
     stop ("data structure is not in the correct format.\n")
   }
-
+  
   if(tolower(type) == "all"){
+    if(verbose == TRUE){
+      cat("Setting threshold based on '", algorithm, "' for all samples.\n", sep = "")
+    }
     channel.1 <- matrix(data = data@assayData$Ch1.Amplitude, ncol = 1)
     channel.2 <- matrix(data = data@assayData$Ch2.Amplitude, ncol = 1)
     result <- .determineThresholds(ch1 = channel.1, ch2 = channel.2, 
@@ -150,6 +138,9 @@ setThresholds <- function(data = NULL, algorithm = "densityhist",
     data@phenoData$ch1['threshold',] <- result[1]
     data@phenoData$ch2['threshold',] <- result[2]
   } else if(tolower(type) == "probe"){
+    if(verbose == TRUE){
+      cat("Setting threshold based on '", algorithm, "' for each probeset.\n", sep="")
+    }
     probes <- unique(data@phenoData$sampleData['probe', ])
     for(i in 1:length(probes)){
       selection <- data@phenoData$sampleData['probe', ] %in% probes[i]
