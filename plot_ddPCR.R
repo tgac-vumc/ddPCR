@@ -72,7 +72,7 @@ plot.ddPCR <- function(data = NULL, well = NULL, dotres = 0.7,
            main = main.text
            )
       sub.text <- .dropletCountText(x = data@assayData$Cluster[,sample])
-      mtext(side = 3, text = sub.text, cex = 0.6)
+      mtext(side = 3, text = sub.text, cex = 0.8)
     
       # FOR GRID LINES
       line500 <- c(-500,0, cumsum(rep(500,50)))

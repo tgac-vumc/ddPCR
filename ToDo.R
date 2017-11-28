@@ -28,7 +28,7 @@
 # [ ] all droplets < edge = minOutlier
 
 # or use 'outliers'
-library(outliers)
+# library(outliers)
 # select negative ch1
 # select negative ch2
 # outliers in both -> if true in both... remove

@@ -71,13 +71,24 @@
   results <- hist.data$mids[result]
   return(results)
 }
-.thresholdmeanSd <- function(x, percentage = 25, stdev = 3){
+.thresholdmeanSd <- function(x, percentage = 25, stdev = 4){
   x <- x[!(x %in% NA)]
   absAmplitude <- abs(diff(c(min(x), max(x))))
   percentageAmplitude <- (absAmplitude/100) * percentage
   baseThreshold <- min(x) + percentageAmplitude
   x <- x[x < baseThreshold]
   result <- mean(x) + (stdev * sd(x))
+  return(result)
+}
+.thresholdMeanDensityMirror <- function(x, breaks = 100, strict = FALSE){
+  x <- x[!(x %in% NA)]
+  if(strict == TRUE){
+    breaks <- .makeBreaks(min = min(x), max = max(x), breaks = breaks)
+  }
+  hist.data <- hist(x, breaks = breaks, plot = FALSE)
+  highest.desity <- hist.data$mids[hist.data$counts == max(hist.data$counts)]
+  result <- diff(x = c(min(x), highest.desity)) + highest.desity
+  
   return(result)
 }
 .determineThresholds <- function(ch1 = NULL, ch2 = NULL, 
@@ -115,6 +126,11 @@
   {
     result <- c(channel.1 = .thresholdmeanSd(x = ch1), 
                 channel.2 = .thresholdmeanSd(x = ch2))
+  }
+  if(tolower(algorithm) == "mirror")
+  {
+    result <- c(channel.1 = .thresholdMeanDensityMirror(x = ch1), 
+                channel.2 = .thresholdMeanDensityMirror(x = ch2))
   }
   return(result)
 }

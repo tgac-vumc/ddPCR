@@ -1,3 +1,16 @@
+.removeOutliers <- function(x, percentage = 0.01){
+  x <- x[!(x[,1] %in% NA),]
+  percentage <- round((nrow(x)/100) * (percentage/2))
+  selection <- c(1:percentage, (nrow(x)-percentage):nrow(x))
+  selection <- !(1:nrow(x)  %in% selection)
+  x <- x[order(x[,1]),]
+  x <- x[selection,]
+  selection <- c(1:percentage, (nrow(x)-percentage):nrow(x))
+  selection <- !(1:nrow(x)  %in% selection)
+  x <- x[order(x[,2]),]
+  x <- x[selection,]
+  return(x)
+}
 minOutliers <- function(data = NULL, well = NULL, 
                         breaks = 250, strict = TRUE,
                         verbose = TRUE){
