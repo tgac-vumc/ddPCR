@@ -36,7 +36,8 @@
       if(verbose == TRUE){
         cat("File is not separated by ',' \nChecking alternative.....")
       }
-      data <- read.table(file = file.path(path, experiment.file.file), header = TRUE, sep = ";", check.names = FALSE, row.names = NULL, fill = TRUE)
+      experimentData <- NULL
+      data <- read.table(file = file.path(path, experiment.file), header = TRUE, sep = ";", check.names = FALSE, row.names = NULL, fill = TRUE)
       experimentData <- rbind(experimentData, data)
       if(ncol(data) == 1){
         stop("Data is not provided in the correct format.\n")

@@ -28,8 +28,8 @@ sourceDir(source.path)
 files <- list.files(data.path, pattern = "Amplitude.csv", full.names = TRUE)
 
 data <- readAmplitudeFiles(files, verbose = TRUE)
-data <- setThresholds(data = data, algorithm = "meansd", 
-                        breaks = 25, strict = TRUE, 
+data <- setThresholds(data = data, algorithm = "densityhist", 
+                        breaks = 25, strict = TRUE, rm.outliers = TRUE,
                         verbose = TRUE)
 
 overview(data)
@@ -43,9 +43,9 @@ plot.ddPCR(data, well = 5, new = TRUE, verbose = TRUE)
 overview(data)
 
 ### show all plots
-for(i in 1:length(files)){
+for(i in 1:12{
   plot.ddPCR(data, well = i, new = TRUE)
-  Sys.sleep(1)
+  Sys.sleep(0.5)
 }
 
 for(i in 1:length(files)){

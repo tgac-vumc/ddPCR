@@ -1,4 +1,4 @@
-.removeOutliers <- function(x, percentage = 0.01){
+.removeOutliers <- function(x, percentage = .5){
   x <- x[!(x[,1] %in% NA),]
   percentage <- round((nrow(x)/100) * (percentage/2))
   selection <- c(1:percentage, (nrow(x)-percentage):nrow(x))

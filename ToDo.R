@@ -11,14 +11,15 @@
 # [x] update overview with correct sample locations as row names
 # [ ] add Cluster 1 mean to 'overview' function
 # [x] fix bug 'minOutliers'
-# [x] determine the best amount of breaks for densityhist -> works good >= 25
+# [x] determine the best amount of breaks for densityhist       -> works good >= 26-28, with rm.outlier = 0.1
 # [ ] integrate mean + 3sd
 # [x] integrate 'outliers' package -> no (updated own outliers function)
 # [ ] setTreshold (manual) : adding number will show that probe
   # [ ] combine data per probe and plot
   # [ ] ask for threshold channel 1 & channel 2 with readline
   # [ ] check if result > min amplitude and result < max amplitude
-
+# [!] Add a check that threshold > first Big cluster of all data / probe
+# [!] Integrate the 'original'outlier function from branch master
 
 
 ### idea new to remove outliers?
@@ -26,6 +27,7 @@
 # [ ] mirror everything left to right side = neg cluster
 # [ ] take mean + 2.5sd or 3sd to determine the edges
 # [ ] all droplets < edge = minOutlier
+
 
 # or use 'outliers'
 # library(outliers)
