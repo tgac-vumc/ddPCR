@@ -27,6 +27,7 @@
   x <- x[!(x %in% NA)]
   result <- NULL
   result <- ((max(x) - min(x))/100) * percentage
+  result <- result + min(x)
   return(result)
 }
 .thresholdKmeans2 <- function(x, nClusters = 2, percentage = 30){
@@ -127,6 +128,8 @@ setThresholds <- function(data = NULL, algorithm = "densityhist",
     stop ("data structure is not in the correct format.\n")
   }
   
+  
+  ### analyse all samples together
   if(tolower(type) == "all"){
     if(verbose == TRUE){
       cat("Setting threshold based on '", algorithm, "' for all samples.\n", sep = "")
@@ -134,8 +137,11 @@ setThresholds <- function(data = NULL, algorithm = "densityhist",
         cat("Removing outliers from the stacked data for threshold analysis only.\n")
       }
     }
+    
+    ### get data from matrix
     channel.1 <- matrix(data = data@assayData$Ch1.Amplitude, ncol = 1)
     channel.2 <- matrix(data = data@assayData$Ch2.Amplitude, ncol = 1)
+    ### removing outliers
     if(is.null(rm.outliers) != TRUE | is.numeric(rm.outliers) == TRUE){
       outlier.data <- cbind(channel.1, channel.2)
       outlier.data <- .removeOutliers(x = outlier.data, percentage = rm.outliers)
@@ -146,29 +152,39 @@ setThresholds <- function(data = NULL, algorithm = "densityhist",
                          algorithm = algorithm, 
                          breaks = breaks, strict = strict,
                          verbose = verbose)
+    
     data@phenoData$ch1['threshold',] <- result[1]
     data@phenoData$ch2['threshold',] <- result[2]
-  } else if(tolower(type) == "probe"){
+  }
+  
+  ### analyse samples per probe
+  if(tolower(type) == "probe"){
+    
     if(verbose == TRUE){
       cat("Setting threshold based on '", algorithm, "' for each probeset.\n", sep="")
       if(is.null(rm.outliers) != TRUE | is.numeric(rm.outliers) == TRUE){
         cat("Removing outliers from the stacked data for threshold analysis only.\n")
       }
     }
+    ### find all the unique probes
     probes <- unique(data@phenoData$sampleData['probe', ])
     for(i in 1:length(probes)){
       selection <- data@phenoData$sampleData['probe', ] %in% probes[i]
+      
       channel.1 <- data@assayData$Ch1.Amplitude[,selection]
       channel.2 <- data@assayData$Ch2.Amplitude[,selection]
       channel.1 <- matrix(data = channel.1, ncol = 1)
       channel.2 <- matrix(data = channel.2, ncol = 1)
+      
+      ### removing outliers
       if(is.null(rm.outliers) != TRUE | is.numeric(rm.outliers) == TRUE){
         outlier.data <- cbind(channel.1, channel.2)
         outlier.data <- .removeOutliers(x = outlier.data, percentage = rm.outliers)
         channel.1 <- outlier.data[,1]
         channel.2 <- outlier.data[,2]
       }
-      
+
+      ### run analysis 
       result <- .determineThresholds(ch1 = channel.1, ch2 = channel.2, 
                                      algorithm = algorithm, 
                                      breaks = breaks, strict = strict,
@@ -180,6 +196,7 @@ setThresholds <- function(data = NULL, algorithm = "densityhist",
   data <- .updateClusters(data) 
   return(data)
 }
+
 setThresholdsWell <- function(data = NULL, well = NULL, algorithm = "densityhist", 
                               breaks = 20, strict = TRUE, 
                               verbose = TRUE){ 
