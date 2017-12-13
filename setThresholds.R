@@ -1,4 +1,3 @@
-
 .makeBreaks <- function(min, max, breaks = 10){
   # not working with hist
   amplitude <- max - min

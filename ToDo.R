@@ -21,6 +21,9 @@
 # [!] Add a check that threshold > first Big cluster of all data / probe
 # [!] Integrate the 'original'outlier function from branch master
 
+# [ ] check densityhist for threshold deternination
+## [ ] based on the initial mid of the break with the first valley?
+## [ ] optional: end (not mid) of initial break with the first valley?
 
 ### idea new to remove outliers?
 # [ ] mean first big cluster, 
