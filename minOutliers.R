@@ -32,7 +32,7 @@ minOutliers <- function(data = NULL, verbose = TRUE){
     ### ANALYSIS CHANNEL 1
     channel1 <- as.numeric(data@assayData$Ch1.Amplitude[,i])
     hist.data <- hist(channel1, breaks=300, plot=FALSE)
-    firstBigClusterCh1 <- grep(pattern = max(hist.data$counts), x = hist.data$counts)
+    firstBigClusterCh1 <- grep(pattern = max(hist.data$counts), x = hist.data$counts)[1]
     
     if(TRUE %in% (hist.data$counts[1:firstBigClusterCh1] %in% 0 == TRUE)){
       closestZero <- max((1:firstBigClusterCh1)[hist.data$counts[1:firstBigClusterCh1] == 0])
@@ -43,7 +43,7 @@ minOutliers <- function(data = NULL, verbose = TRUE){
     ### ANALYSIS CHANNEL 2
     channel2 <- as.numeric(data@assayData$Ch2.Amplitude[,i])
     hist.data <- hist(channel2, breaks=300, plot=FALSE)
-    firstBigClusterCh2 <- grep(pattern = max(hist.data$counts), x = hist.data$counts)
+    firstBigClusterCh2 <- grep(pattern = max(hist.data$counts), x = hist.data$counts)[1]
     
     if(TRUE %in% (hist.data$counts[1:firstBigClusterCh2] %in% 0 == TRUE)){
       closestZero <- max((1:firstBigClusterCh2)[hist.data$counts[1:firstBigClusterCh2] == 0])
