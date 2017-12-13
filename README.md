@@ -8,9 +8,10 @@ Use ddPCR QuantaSoft software to export raw Amplitude data
 - 'Export Amplitude and Cluster Data' in options 
 
 ### select a path and get all the files 
+'''
 path <- "experiment path"
 files <- list.files(path, pattern = "Amplitude.csv", full.names = TRUE)
-
+'''
 ### Pipeline example:
 
 data <- readAmplitudeFiles(files)
