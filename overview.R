@@ -4,7 +4,7 @@ overview <- function(data){
   } 
   probes <- unique(data@phenoData$sampleData['probe', ])
   nSamples <- ncol(data@phenoData$sampleData)
-  cat("ddPCR structure has", nSamples, "samples with", length(probes), "probe(s).\n\n")
+  message("\nddPCR structure has ", nSamples, " samples with ", length(probes), " probe(s).\n")
   for (i in 1:length(probes)){
     selection <- data@phenoData$sampleData['probe', ] %in% probes[i]
     message("Probe ",i, ": ") ; cat(probes[i], "\n\n", sep ="")
