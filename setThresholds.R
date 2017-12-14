@@ -49,21 +49,21 @@
     if(x[i+1] > x[i+2] & x[i+2] > x[i+3] &
        x[i+3] <= x[i+4]
     ) {
-      result <- c(result, i+3)
+      result <- c(result, i+3)[1]
     }
   }
-  result <- result[1]
-  results <- hist.data$mids[result]
+  results <- hist.data$breaks[(result+1)]
   return(results)
 }
-.thresholdmeanSd <- function(x, percentage = 25, stdev = 4){
+.thresholdmeanSd <- function(x, stdev = 3, breaks = 15){
   x <- x[!(x %in% NA)]
-  absAmplitude <- abs(diff(c(min(x), max(x))))
-  percentageAmplitude <- (absAmplitude/100) * percentage
-  baseThreshold <- min(x) + percentageAmplitude
-  x <- x[x < baseThreshold]
-  result <- mean(x) + (stdev * sd(x))
-  return(result)
+  threshold <- .thresholdHist(x = x, breaks = breaks)
+  x <- x[x < threshold]
+  refined.threshold <- mean(x) + (stdev * sd(x))
+  if(refined.threshold < threshold){
+    refined.threshold <- threshold
+  } 
+  return(refined.threshold)
 }
 .thresholdMeanDensityMirror <- function(x, breaks = 100, strict = FALSE){
   x <- x[!(x %in% NA)]
