@@ -13,7 +13,7 @@
 }
 .thresholdHist <- function(x, breaks = 20, strict = FALSE){
   x <- x[!(x %in% NA)]
-  cutoff <- min(x) + (abs(max(x) - min(x)) / 2.5)
+  cutoff <- min(x) + (abs(max(x) - min(x)) / 2)
   if(strict == TRUE){
     breaks <- .makeBreaks(min = min(x), max = max(x), breaks = breaks)
   }
@@ -99,11 +99,7 @@
   }
   
   ### removing percentage
-
   if(is.numeric(rm.percentage) == TRUE){
-    if(verbose == TRUE){
-      cat("Removing", rm.percentage, "of outer edges of the data for threshold analysis.\n")
-    }
     ch1 <- .removePercentage(ch1, percentage = rm.percentage)
     ch2 <- .removePercentage(ch2, percentage = rm.percentage)
   }

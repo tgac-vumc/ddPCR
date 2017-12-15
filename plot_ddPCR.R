@@ -150,5 +150,5 @@ plot.probe <- function(data = NULL, probe = NULL, dotres = 0.7,
   threshold.ch1 <- unique(data@phenoData$ch1['threshold', selection.probe], na.rm = TRUE)
   abline(h = threshold.ch1, col = "#ff0000")
   threshold.ch2 <- unique(data@phenoData$ch2['threshold', selection.probe], na.rm = TRUE)
-  abline(h = threshold.ch2, col = "#ff0000")
+  abline(v = threshold.ch2, col = "#ff0000")
 }
