@@ -1,3 +1,12 @@
+.removePercentage <- function(x, percentage = .5){
+  x <- x[!(x %in% NA)]
+  percentage <- round((length(x)/100) * (percentage/2))
+  selection <- c(1:percentage, (length(x)-percentage):length(x))
+  selection <- !(1:length(x)  %in% selection)
+  x <- x[order(x)]
+  x <- x[selection]
+  return(x)
+}
 .removeOutliers <- function(x, percentage = .5){
   x <- x[!(x[,1] %in% NA),]
   percentage <- round((nrow(x)/100) * (percentage/2))

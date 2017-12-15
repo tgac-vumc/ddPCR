@@ -17,8 +17,9 @@
     breaks <- .makeBreaks(min = min(x), max = max(x), breaks = breaks)
   }
   hist.data <- hist(x, breaks = breaks, plot = FALSE)
-  hist.data <- rbind(hist.data$mids, hist.data$counts)
+  hist.data <- rbind(mids = hist.data$mids, counts = hist.data$counts)
   hist.data <- hist.data[ ,-c(1:2,(dim(hist.data)[2] - 2):dim(hist.data)[2])]
+  hist.data <- hist.data[,(grep(pattern = max(hist.data[2,]), x = hist.data[2,])): dim(hist.data)[2]]
   result <- mean(hist.data[1, hist.data[2,] == min(hist.data[2,])])
   return(result)
 }
@@ -37,26 +38,35 @@
     }
   return(threshold)
 }
-.thresholdDensityHist <- function(x, breaks = 100, strict = FALSE){
+.thresholdDensityHist <- function(x, breaks = 100, strict = FALSE, verbose = TRUE){
   x <- x[!(x %in% NA)]
+  # remove high positive droplets for analysis
+  cutoff <- min(x, na.rm = TRUE) + (abs(diff(c(max(x, na.rm = TRUE), min(x, na.rm = TRUE)))) /2)
   if(strict == TRUE){
-    breaks <- .makeBreaks(min = min(x), max = max(x), breaks = breaks)
+    breaks <- .makeBreaks(min = min(x, na.rm = TRUE), max = max(x, na.rm = TRUE), breaks = breaks)
   }
   hist.data <- hist(x, breaks = breaks, plot = FALSE)
   x <- hist.data$counts
+  x <- c(x, x[length(x)], x[length(x)])
   result <- NULL
-  for(i in 1:(length(x)-5)){
+  for(i in 1:(length(x)-3)){
     if(x[i+1] > x[i+2] & x[i+2] > x[i+3] &
        x[i+3] <= x[i+4]
     ) {
-      result <- c(result, i+3)[1]
+      result <- c(result, i+3)
     }
   }
-  results <- hist.data$breaks[(result+1)]
-  return(results)
+  result <- hist.data$breaks[result]
+  result <- result[result < cutoff]
+  if(length(result) > 1){
+    result <- max(result)
+  }
+  return(result)
 }
 .thresholdmeanSd <- function(x, stdev = 3, breaks = 15){
+  
   x <- x[!(x %in% NA)]
+  x <- .removePercentage(x = x, percentage = 0.5)
   threshold <- .thresholdHist(x = x, breaks = breaks)
   x <- x[x < threshold]
   refined.threshold <- mean(x) + (stdev * sd(x))
@@ -79,6 +89,7 @@
 .determineThresholds <- function(ch1 = NULL, ch2 = NULL, 
                                  algorithm = NULL, 
                                  breaks = 100, strict = TRUE,
+                                 rm.percentage = NULL,
                                  verbose = FALSE){
   if(is.null(ch1) == TRUE | is.null(ch2) == TRUE){ 
     stop("Data to determine the thresholds is not in correct format.\n")
@@ -86,6 +97,13 @@
   if(is.null(algorithm) == TRUE){
     stop("algorithm has not been set to determine thresholds.\n")
   }
+  
+  ### removing percentage
+  if(is.numeric(rm.percentage) == TRUE){
+    channel.1 <- .removePercentage(channel.1, percentage = rm.percentage)
+    channel.2 <- .removePercentage(channel.2, percentage = rm.percentage)
+  }
+  
   ### RUN ALGORITHM
   if(tolower(algorithm) == "hist" | tolower(algorithm) == "histogram")
   {
@@ -121,7 +139,8 @@
 }
 setThresholds <- function(data = NULL, algorithm = "densityhist", 
                           breaks = 100, strict = TRUE, 
-                          type = "probe", rm.outliers = TRUE,
+                          type = "probe",
+                          rm.percentage = NULL,
                           verbose = TRUE){ 
   if((class(data)[1] == "ddPCRdata") != TRUE){
     stop ("data structure is not in the correct format.\n")
@@ -132,24 +151,15 @@ setThresholds <- function(data = NULL, algorithm = "densityhist",
   if(tolower(type) == "all"){
     if(verbose == TRUE){
       cat("Setting threshold based on '", algorithm, "' for all samples.\n", sep = "")
-      if(is.null(rm.outliers) != TRUE | is.numeric(rm.outliers) == TRUE){
-        cat("Removing outliers from the stacked data for threshold analysis only.\n")
-      }
     }
-    
     ### get data from matrix
     channel.1 <- matrix(data = data@assayData$Ch1.Amplitude, ncol = 1)
     channel.2 <- matrix(data = data@assayData$Ch2.Amplitude, ncol = 1)
-    ### removing outliers
-    if(is.null(rm.outliers) != TRUE | is.numeric(rm.outliers) == TRUE){
-      outlier.data <- cbind(channel.1, channel.2)
-      outlier.data <- .removeOutliers(x = outlier.data, percentage = rm.outliers)
-      channel.1 <- outlier.data[,1]
-      channel.2 <- outlier.data[,2]
-    }
+    
     result <- .determineThresholds(ch1 = channel.1, ch2 = channel.2, 
                          algorithm = algorithm, 
                          breaks = breaks, strict = strict,
+                         rm.percentage = rm.percentage,
                          verbose = verbose)
     
     data@phenoData$ch1['threshold',] <- result[1]
@@ -161,9 +171,6 @@ setThresholds <- function(data = NULL, algorithm = "densityhist",
     
     if(verbose == TRUE){
       cat("Setting threshold based on '", algorithm, "' for each probeset.\n", sep="")
-      if(is.null(rm.outliers) != TRUE | is.numeric(rm.outliers) == TRUE){
-        cat("Removing outliers from the stacked data for threshold analysis only.\n")
-      }
     }
     ### find all the unique probes
     probes <- unique(data@phenoData$sampleData['probe', ])
@@ -174,19 +181,12 @@ setThresholds <- function(data = NULL, algorithm = "densityhist",
       channel.2 <- data@assayData$Ch2.Amplitude[,selection]
       channel.1 <- matrix(data = channel.1, ncol = 1)
       channel.2 <- matrix(data = channel.2, ncol = 1)
-      
-      ### removing outliers
-      if(is.null(rm.outliers) != TRUE | is.numeric(rm.outliers) == TRUE){
-        outlier.data <- cbind(channel.1, channel.2)
-        outlier.data <- .removeOutliers(x = outlier.data, percentage = rm.outliers)
-        channel.1 <- outlier.data[,1]
-        channel.2 <- outlier.data[,2]
-      }
 
       ### run analysis 
       result <- .determineThresholds(ch1 = channel.1, ch2 = channel.2, 
                                      algorithm = algorithm, 
                                      breaks = breaks, strict = strict,
+                                     rm.percentage = rm.percentage,
                                      verbose = verbose)
       data@phenoData$ch1['threshold', selection] <- result[1]
       data@phenoData$ch2['threshold', selection] <- result[2]
@@ -198,6 +198,7 @@ setThresholds <- function(data = NULL, algorithm = "densityhist",
 
 setThresholdsWell <- function(data = NULL, well = NULL, algorithm = "densityhist", 
                               breaks = 20, strict = TRUE, 
+                              rm.percentage = NULL,
                               verbose = TRUE){ 
   if((class(data)[1] == "ddPCRdata") != TRUE){
     stop ("data structure is not in the correct format.\n")
@@ -215,9 +216,11 @@ setThresholdsWell <- function(data = NULL, well = NULL, algorithm = "densityhist
     channel.2 <- data@assayData$Ch2.Amplitude[,selection]
     channel.1 <- matrix(data = channel.1, ncol = 1)
     channel.2 <- matrix(data = channel.2, ncol = 1)
+    
     result <- .determineThresholds(ch1 = channel.1, ch2 = channel.2, 
                                      algorithm = algorithm, 
                                      breaks = breaks, strict = strict,
+                                     rm.percentage = rm.percentage,
                                      verbose = verbose)
     data@phenoData$ch1['threshold', selection] <- result[1]
     data@phenoData$ch2['threshold', selection] <- result[2]
