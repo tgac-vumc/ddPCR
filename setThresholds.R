@@ -11,19 +11,21 @@
   result <- c(result, (max+1))
   return(result)
 }
-.thresholdHist <- function(x, breaks = 15, strict = FALSE){
+.thresholdHist <- function(x, breaks = 20, strict = FALSE){
   x <- x[!(x %in% NA)]
+  cutoff <- min(x) + (abs(max(x) - min(x)) / 2.5)
   if(strict == TRUE){
     breaks <- .makeBreaks(min = min(x), max = max(x), breaks = breaks)
   }
   hist.data <- hist(x, breaks = breaks, plot = FALSE)
   hist.data <- rbind(mids = hist.data$mids, counts = hist.data$counts)
-  hist.data <- hist.data[ ,-c(1:2,(dim(hist.data)[2] - 2):dim(hist.data)[2])]
-  hist.data <- hist.data[,(grep(pattern = max(hist.data[2,]), x = hist.data[2,])): dim(hist.data)[2]]
+  hist.data <- hist.data[ ,hist.data[1,] < cutoff]
+  
+  hist.data <- hist.data[,(grep(pattern = max(hist.data[2,]), x = hist.data[2,])):dim(hist.data)[2]]
   result <- mean(hist.data[1, hist.data[2,] == min(hist.data[2,])])
   return(result)
 }
-.thresholdRanges <- function(x, percentage = 20){
+.thresholdRanges <- function(x, percentage = 33){
   x <- x[!(x %in% NA)]
   result <- NULL
   result <- ((max(x) - min(x))/100) * percentage
@@ -41,7 +43,7 @@
 .thresholdDensityHist <- function(x, breaks = 100, strict = FALSE, verbose = TRUE){
   x <- x[!(x %in% NA)]
   # remove high positive droplets for analysis
-  cutoff <- min(x, na.rm = TRUE) + (abs(diff(c(max(x, na.rm = TRUE), min(x, na.rm = TRUE)))) /2)
+  cutoff <- min(x) + (abs(max(x) - min(x)) / 2)
   if(strict == TRUE){
     breaks <- .makeBreaks(min = min(x, na.rm = TRUE), max = max(x, na.rm = TRUE), breaks = breaks)
   }
@@ -64,13 +66,11 @@
   return(result)
 }
 .thresholdmeanSd <- function(x, stdev = 3, breaks = 15){
-  
   x <- x[!(x %in% NA)]
-  x <- .removePercentage(x = x, percentage = 0.5)
   threshold <- .thresholdHist(x = x, breaks = breaks)
   x <- x[x < threshold]
   refined.threshold <- mean(x) + (stdev * sd(x))
-  if(refined.threshold < threshold){
+  if(refined.threshold > threshold){
     refined.threshold <- threshold
   } 
   return(refined.threshold)
@@ -99,9 +99,13 @@
   }
   
   ### removing percentage
+
   if(is.numeric(rm.percentage) == TRUE){
-    channel.1 <- .removePercentage(channel.1, percentage = rm.percentage)
-    channel.2 <- .removePercentage(channel.2, percentage = rm.percentage)
+    if(verbose == TRUE){
+      cat("Removing", rm.percentage, "of outer edges of the data for threshold analysis.\n")
+    }
+    ch1 <- .removePercentage(ch1, percentage = rm.percentage)
+    ch2 <- .removePercentage(ch2, percentage = rm.percentage)
   }
   
   ### RUN ALGORITHM
@@ -138,7 +142,7 @@
   return(result)
 }
 setThresholds <- function(data = NULL, algorithm = "densityhist", 
-                          breaks = 100, strict = TRUE, 
+                          breaks = 20, strict = TRUE, 
                           type = "probe",
                           rm.percentage = NULL,
                           verbose = TRUE){ 
@@ -149,9 +153,6 @@ setThresholds <- function(data = NULL, algorithm = "densityhist",
   
   ### analyse all samples together
   if(tolower(type) == "all"){
-    if(verbose == TRUE){
-      cat("Setting threshold based on '", algorithm, "' for all samples.\n", sep = "")
-    }
     ### get data from matrix
     channel.1 <- matrix(data = data@assayData$Ch1.Amplitude, ncol = 1)
     channel.2 <- matrix(data = data@assayData$Ch2.Amplitude, ncol = 1)
