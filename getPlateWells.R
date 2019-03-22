@@ -1,5 +1,4 @@
-getPlateWells <- function(prefix=NULL, suffix=NULL)
-{
+.getPlateWells <- function(prefix=NULL, suffix=NULL){
   result <- rep(NA, 96)
   
   numbers <- c("01","02","03","04","05","06","07","08","09","10","11","12")

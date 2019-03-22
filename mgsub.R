@@ -1,5 +1,4 @@
-mgsub <- function(pattern, replacement, x, ...) 
-{
+.mgsub <- function(pattern, replacement, x, ...) {
   if (length(pattern)!=length(replacement)) {
     stop("pattern and replacement do not have the same length.")
   }
